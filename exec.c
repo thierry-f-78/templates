@@ -157,7 +157,7 @@ char *replace_n(char *str) {
 		p++;
 	}
 
-	dest = malloc(len);
+	dest = malloc(len + 1);
 	if (dest == NULL) {
 		ERRS("malloc(%d): %s\n", len, strerror(errno));
 		exit(1);
@@ -208,6 +208,8 @@ char *replace_n(char *str) {
 		}
 		p++;
 	}
+
+	*dest = '\0';
 
 	return ret;
 }
