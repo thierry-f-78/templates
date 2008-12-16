@@ -71,12 +71,19 @@ char *exec_blockdup(char *str) {
 
 char *exec_strdup(char *str) {
 	char *out;
+	int len;
 
-	out = strdup(str);
+	str += 1; /* supprime " */
+	len = strlen(str) - 1; /* supprime " */
+
+	out = malloc(len + 1);
 	if (out == NULL) {
-		ERRS("strdup(\"%s\"): %s\n", str, strerror(errno));
+		ERRS("malloc(%d): %s\n", len + 1, strerror(errno));
 		exit(1);
 	}
+
+	memcpy(out, str, len);
+	out[len] = '\0';
 
 	return out;
 }
