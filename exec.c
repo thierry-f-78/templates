@@ -140,6 +140,9 @@ char *replace_n(char *str) {
 		case '\n':
 		case '\r':
 		case '\t':
+			len += 3;
+			break;
+
 		case '>':
 		case '<':
 		case '"':
@@ -167,10 +170,12 @@ char *replace_n(char *str) {
 
 		case '\n':
 			*dest = '\\'; dest++;
+			*dest = '\\'; dest++;
 			*dest = 'n';  dest++;
 			break;
 
 		case '\r':
+			*dest = '\\'; dest++;
 			*dest = '\\'; dest++;
 			*dest = 'r';  dest++;
 			break;
@@ -186,6 +191,7 @@ char *replace_n(char *str) {
 			break;
 
 		case '\t':
+			*dest = '\\'; dest++;
 			*dest = '\\'; dest++;
 			*dest = 't';  dest++;
 			break;
