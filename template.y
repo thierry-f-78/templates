@@ -157,7 +157,7 @@ Expressions:
 	;
 
 Expr:
-	| PRINT                   { my_list_add_tail(&$1->b, stack_cur); }
+	| PRINT                   { DEBUG("> PRINT "); my_list_add_tail(&$1->b, stack_cur); }
 	| Expression SEP          { my_list_add_tail(&$1->b, stack_cur); }
 	;
 
