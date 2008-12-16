@@ -297,13 +297,13 @@ void exec_display_recurse(struct exec_node *n, int first) {
 		c = replace_n(n->v.string);
 		if (display_ptr == 1)
 			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
-			       "{b=%p|next=%p|prev=%p}}|%s|%s}\" ]\n",
+			       "{b=%p|next=%p|prev=%p}}|%s|\\\"%s\\\"}\" ]\n",
 			       n, n,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       exec_cmd2str[n->type], c);
 		else
-			printf("\t\"%p\" [ label=\"{%s|%s}\" ]\n",
+			printf("\t\"%p\" [ label=\"{%s|\\\"%s\\\"}\" ]\n",
 			       n, exec_cmd2str[n->type], c);
 		break;
 	
