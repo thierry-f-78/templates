@@ -237,7 +237,7 @@ RValue:
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| OPENPAR RValue CLOSEPAR { $$ = $1; }
+	| OPENPAR RValue CLOSEPAR { $$ = $2; }
 	;
 
 Value:
