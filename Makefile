@@ -15,7 +15,7 @@ OBJS =  template.o syntax.o exec.o
 FILES = template.h template.c syntax.c syntax.h
 
 #YACC_DEBUG = -t
-CPPFLAGS = -DDEBUGING
+CPPFLAGS = -DDEBUGING -DYYDEBUG
 
 ifneq ($(V),1)
 
