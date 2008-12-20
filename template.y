@@ -78,6 +78,7 @@ int yyerror(char *str) {
 %token FOR
 %token WHILE
 %token IF
+%token ELSE
 %token BREAK
 %token CONT
 
@@ -134,6 +135,15 @@ If:
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			my_list_add_tail(&$3->b, &$1->c);
+			my_list_add_tail(&n->b, &$1->c);
+			$$ = $1;
+		}
+	| If ELSE OPENBLOCK { stack_push(); } Input CLOSEBLOCK
+		{
+			struct exec_node *n;
+			n = exec_new(X_COLLEC, NULL);
+			list_replace(stack_cur, &n->c);
+			stack_pop();
 			my_list_add_tail(&n->b, &$1->c);
 			$$ = $1;
 		}

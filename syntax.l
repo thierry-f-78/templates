@@ -135,6 +135,7 @@ block           "%>"([^<]|<[^\%])"<%"
 "for"      {D; yylval = exec_new(X_FOR,    NULL); RETURN(FOR); }
 "while"    {D; yylval = exec_new(X_WHILE,  NULL); RETURN(WHILE); }
 "if"       {D; yylval = exec_new(X_IF,     NULL); RETURN(IF); }
+"else"     {D; RETURN(ELSE); }
 "break"    {D; yylval = exec_new(X_BREAK,  NULL); RETURN(BREAK); }
 "continue" {D; yylval = exec_new(X_CONT,   NULL); RETURN(CONT); }
 
