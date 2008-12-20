@@ -7,7 +7,7 @@
 #gcc -c calc.y.c -o calc.y.o
 #gcc -o calc calc.lex.o calc.y.o -ll -lm [éventuellement -lfl]
 
-LDFLAGS = -lm
+LDFLAGS = 
 CFLAGS = -Wall -g -O0
 YFLAGS = -v
 
