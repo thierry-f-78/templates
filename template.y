@@ -111,7 +111,7 @@ Input:
 	;
 
 While:
-	WHILE OPENPAR RValue CLOSEPAR OPENBLOCK { stack_push(); } Expressions CLOSEBLOCK
+	WHILE OPENPAR RValue CLOSEPAR OPENBLOCK { stack_push(); } Input CLOSEBLOCK
 		{
 			struct exec_node *n;
 			n = exec_new(X_COLLEC, NULL);
@@ -124,7 +124,7 @@ While:
 	;
 
 If:
-	IF OPENPAR RValue CLOSEPAR OPENBLOCK { stack_push(); } Expressions CLOSEBLOCK
+	IF OPENPAR RValue CLOSEPAR OPENBLOCK { stack_push(); } Input CLOSEBLOCK
 		{
 			struct exec_node *n;
 			n = exec_new(X_COLLEC, NULL);
@@ -137,7 +137,7 @@ If:
 	;
 
 For:
-	FOR OPENPAR Expression SEP RValue SEP Expression CLOSEPAR OPENBLOCK { stack_push(); } Expressions CLOSEBLOCK
+	FOR OPENPAR Expression SEP RValue SEP Expression CLOSEPAR OPENBLOCK { stack_push(); } Input CLOSEBLOCK
 		{
 			struct exec_node *n;
 			n = exec_new(X_COLLEC, NULL);
@@ -157,7 +157,7 @@ Expressions:
 	;
 
 Expr:
-	| PRINT                   { DEBUG("> PRINT "); my_list_add_tail(&$1->b, stack_cur); }
+	| PRINT                   { my_list_add_tail(&$1->b, stack_cur); }
 	| Expression SEP          { my_list_add_tail(&$1->b, stack_cur); }
 	;
 
