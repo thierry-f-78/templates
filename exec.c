@@ -30,7 +30,9 @@ const char *exec_cmd2str[] = {
 	[X_STRING]   = "X_STRING",
 	[X_FOR]      = "X_FOR",
 	[X_WHILE]    = "X_WHILE",
-	[X_IF]       = "X_IF"
+	[X_IF]       = "X_IF",
+	[X_BREAK]    = "X_BREAK",
+	[X_CONT]     = "X_CONT"
 };
 
 struct exec *exec_template;
@@ -233,6 +235,7 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	case X_DIV:
 	case X_MOD:
 	case X_EQUAL:
+	case X_DIFF:
 	case X_LT:
 	case X_GT:
 	case X_LE:
@@ -244,6 +247,8 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	case X_WHILE:
 	case X_DISPLAY:
 	case X_IF:
+	case X_CONT:
+	case X_BREAK:
 		if (display_ptr == 1)
 			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s}\" ]\n",

@@ -78,6 +78,8 @@ int yyerror(char *str) {
 %token FOR
 %token WHILE
 %token IF
+%token BREAK
+%token CONT
 
 %token SEP
 %token COMMA
@@ -159,6 +161,8 @@ Expressions:
 
 Expr:
 	| PRINT                   { my_list_add_tail(&$1->b, stack_cur); }
+	| BREAK SEP               { my_list_add_tail(&$1->b, stack_cur); }
+	| CONT SEP                { my_list_add_tail(&$1->b, stack_cur); }
 	| Expression SEP          { my_list_add_tail(&$1->b, stack_cur); }
 	;
 

@@ -39,7 +39,9 @@ enum exec_type {
 
 	X_FOR,
 	X_WHILE,
-	X_IF
+	X_IF,
+	X_BREAK,
+	X_CONT
 };
 
 extern const char *exec_cmd2str[];
