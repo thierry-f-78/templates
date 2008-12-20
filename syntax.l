@@ -121,7 +121,15 @@ block           "%>"([^<]|<[^\%])"<%"
 
 %%
 
-"%>"([^<]|<[^%])*"<%" {D; yylval = exec_new(X_PRINT, exec_blockdup(yytext)); RETURN(PRINT); }
+"%>"([^<]|<[^%])*"<%" {
+           	char *p;
+           	D;
+           	for (p=yytext; *p!='\0'; p++)
+           		if (*p == '\n') 
+           			yylineno++;
+           	yylval = exec_new(X_PRINT, exec_blockdup(yytext));
+           	RETURN(PRINT); 
+           }
 
 "{"        {D; RETURN(OPENBLOCK); }
 "}"        {D; RETURN(CLOSEBLOCK); }
