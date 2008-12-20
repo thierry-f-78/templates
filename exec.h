@@ -21,6 +21,7 @@ enum exec_type {
 	X_MOD,
 
 	X_EQUAL,
+	X_DIFF,
 	X_LT,
 	X_GT,
 	X_LE,
