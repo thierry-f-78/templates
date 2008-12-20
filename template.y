@@ -255,10 +255,15 @@ Value:
 	;
 
 Display:
-	DISPLAY OPENPAR VAR CLOSEPAR {
+	DISPLAY OPENPAR DisplayArg CLOSEPAR {
 			my_list_add_tail(&$3->b, &$1->c);
 			$$ = $1;
 		}
+
+DisplayArg:
+	| VAR      { $$ = $1; }
+	| Function { $$ = $1; }
+	| STR      { $$ = $1; }
 
 Function:
 	FUNCTION OPENPAR { stack_push(); } ArgsList {
