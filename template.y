@@ -14,7 +14,7 @@
 
 #ifdef DEBUGING
 #	define DEBUG(fmt, args...) \
-	       fprintf(stderr, "[%s:%s:%d] " fmt "\n", \
+	       fprintf(stderr, "\e[33m[%s:%s:%d] " fmt "\e[0m\n", \
                   __FILE__, __FUNCTION__, __LINE__, ##args);
 #endif
 
