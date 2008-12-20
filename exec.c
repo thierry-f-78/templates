@@ -193,6 +193,16 @@ char *replace_n(char *str) {
 			*dest = '>';  dest++;
 			break;
 
+		case '{':
+			*dest = '\\'; dest++;
+			*dest = '{';  dest++;
+			break;
+
+		case '}':
+			*dest = '\\'; dest++;
+			*dest = '}';  dest++;
+			break;
+
 		case '\t':
 			*dest = '\\'; dest++;
 			*dest = '\\'; dest++;
