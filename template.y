@@ -108,10 +108,13 @@ int yyerror(char *str) {
 %%
 
 Input:
-	| Input For               { my_list_add_tail(&$2->b, stack_cur); }
-	| Input While             { my_list_add_tail(&$2->b, stack_cur); }
-	| Input If                { my_list_add_tail(&$2->b, stack_cur); }
-	| Input Expr
+	| Input InputElement
+
+InputElement:
+	| For               { my_list_add_tail(&$1->b, stack_cur); }
+	| While             { my_list_add_tail(&$1->b, stack_cur); }
+	| If                { my_list_add_tail(&$1->b, stack_cur); }
+	| Expr
 	;
 
 While:
@@ -128,26 +131,34 @@ While:
 	;
 
 If:
-	IF OPENPAR RValue CLOSEPAR OPENBLOCK { stack_push(); } Input CLOSEBLOCK
+	IF OPENPAR RValue CLOSEPAR IfBlock
 		{
-			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL);
-			list_replace(stack_cur, &n->c);
-			stack_pop();
 			my_list_add_tail(&$3->b, &$1->c);
-			my_list_add_tail(&n->b, &$1->c);
+			my_list_add_tail(&$5->b, &$1->c);
 			$$ = $1;
 		}
-	| If ELSE OPENBLOCK { stack_push(); } Input CLOSEBLOCK
+	| If ELSE IfBlock
 		{
-			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL);
-			list_replace(stack_cur, &n->c);
-			stack_pop();
-			my_list_add_tail(&n->b, &$1->c);
+			my_list_add_tail(&$3->b, &$1->c);
 			$$ = $1;
 		}
 	;
+
+IfBlock:
+	{ stack_push(); } InputElement {
+			struct exec_node *n;
+			n = exec_new(X_COLLEC, NULL);
+			list_replace(stack_cur, &n->c);
+			stack_pop();
+			$$ = n;
+		}
+	| OPENBLOCK { stack_push(); } Input CLOSEBLOCK {
+			struct exec_node *n;
+			n = exec_new(X_COLLEC, NULL);
+			list_replace(stack_cur, &n->c);
+			stack_pop();
+			$$ = n;
+		}
 
 For:
 	FOR OPENPAR Expression SEP RValue SEP Expression CLOSEPAR OPENBLOCK { stack_push(); } Input CLOSEBLOCK
