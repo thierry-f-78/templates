@@ -89,6 +89,14 @@ struct exec {
 	exec_write w;
 };
 
+struct exec_run {
+	void *vars;
+	void *arg;
+	exec_write w;
+	struct exec *e;
+	struct exec_node *n;
+};
+
 /**
  * New template
  */
@@ -116,7 +124,7 @@ void exec_display(struct exec *e);
 void exec_declare_func(struct exec *e, char *name, exec_function f);
 
 /**
- * set easy argument
+ * set default easy argument
  * @param e is template id
  * @param easy is easy arg
  */
@@ -126,7 +134,7 @@ void exec_set_easy(struct exec *e, void *easy) {
 }
 
 /**
- * set write function
+ * set default write function
  * @param e is template id
  * @param w write function
  */
@@ -134,6 +142,32 @@ static inline
 void exec_set_write(struct exec *e, exec_write w) {
 	e->w = w;
 }
+
+/**
+ * set easy argument
+ * @param e is template id
+ * @param easy is easy arg
+ */
+static inline
+void exec_run_set_easy(struct exec_run *r, void *easy) {
+	r->arg = easy;
+}
+
+/**
+ * set write function
+ * @param e is template id
+ * @param w write function
+ */
+static inline
+void exec_run_set_write(struct exec_run *r, exec_write w) {
+	r->w = w;
+}
+
+/**
+ * Initiate an execution session
+ * @param e is template id
+ */
+struct exec_run *exec_new_run(struct exec *e);
 
 /* private */
 struct exec_node *exec_new(enum exec_type type, void *value);

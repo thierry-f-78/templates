@@ -52,6 +52,32 @@ struct exec *exec_new_template(void) {
 	return e;
 }
 
+struct exec_run *exec_new_run(struct exec *e) {
+	struct exec_run *r;
+
+	/* memory for struct */
+	r = malloc(sizeof(*r));
+	if (r == NULL) {
+		ERRS("malloc(%d): %s", sizeof(*r), strerror(errno));
+		exit(1);
+	}
+
+	/* memory for vars */
+	r->vars = malloc(sizeof(r->vars) * e->nbvars);
+	if (r->vars == NULL) {
+		ERRS("malloc(%d): %s", sizeof(r->vars), strerror(errno));
+		exit(1);
+	}
+
+	/* copy default args and init run */
+	r->arg = e->arg;
+	r->w = e->w;
+	r->e = e;
+	r->n = e->program;
+
+	return r;
+}
+
 struct exec_node *exec_new(enum exec_type type, void *value) {
 	struct exec_node *n;
 
