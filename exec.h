@@ -169,6 +169,24 @@ void exec_run_set_write(struct exec_run *r, exec_write w) {
  */
 struct exec_run *exec_new_run(struct exec *e);
 
+/**
+ * get variable descriptor
+ * @param e is template id
+ * @param var is var name
+ */
+struct exec_vars *exec_get_var(struct exec *e, char *str);
+
+/**
+ * set variable value
+ * @param r is run program id
+ * @param v is var descriptor
+ * @param val is value
+ */
+static inline
+void exec_set_var(struct exec_run *r, struct exec_vars *v, void *val) {
+	((long *)r->vars)[v->offset] = (long)val;
+}
+
 /* private */
 struct exec_node *exec_new(enum exec_type type, void *value);
 char *exec_blockdup(char *str);

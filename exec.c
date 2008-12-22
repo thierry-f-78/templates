@@ -167,6 +167,20 @@ void *exec_var(char *str) {
 	return v;
 }
 
+struct exec_vars *exec_get_var(struct exec *e, char *str) {
+	struct exec_vars *v;
+
+	/* search var */
+	list_for_each_entry(v, &e->vars, chain) {
+		if (strcmp(v->name, str)==0)
+			break;
+	}
+	if (&v->chain != &e->vars)
+		return v;
+
+	return NULL;
+}
+
 void exec_declare_func(struct exec *e, char *name, exec_function fc) {
 	struct exec_funcs *f;
 
@@ -447,6 +461,7 @@ void exec_display_recurse(struct exec_node *n, int first) {
 }
 
 void exec_display(struct exec *e) {
+	struct exec_vars *v;
 
 	printf(
 		"digraph finite_state_machine {\n"
@@ -456,10 +471,16 @@ void exec_display(struct exec *e) {
 		"\tnode [ color=\"black\" ]\n"
 		"\tnode [ fontcolor=\"black\" ]\n"
 		"\tnode [ fillcolor=\"white\" ]\n"
-
 	);
+
+	/* display var */
+	printf("\t\"vars\" [ label=\"{Varlist");
+	list_for_each_entry(v, &e->vars, chain)
+		printf("|{%s|%d}", v->name, v->offset);
+	printf("}\" fillcolor=\"lightblue\" ]\n");
 
 	exec_display_recurse(e->program, 1);
 
+	printf("\t\"vars\" -> \"%p\"\n", e->program);
 	printf("}\n");
 }
