@@ -197,7 +197,11 @@ Block:
 	;
 
 Switch:
-	SWITCH OPENPAR { stack_push(); } SwitchArgs { my_list_add_tail(&$4->b, stack_cur); } CLOSEPAR OPENBLOCK IntoSwitch CLOSEBLOCK
+	SWITCH OPENPAR
+		{ stack_push(); }
+	SwitchArgs 
+		{ my_list_add_tail(&$4->b, stack_cur); }
+	CLOSEPAR OPENBLOCK IntoSwitch CLOSEBLOCK
 		{
 			list_replace(stack_cur, &$1->c);
 			stack_pop();
