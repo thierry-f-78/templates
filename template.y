@@ -349,7 +349,7 @@ DisplayArg:
 	| STR      { $$ = $1; }
 
 Function:
-	FUNCTION OPENPAR { stack_push(); } ArgsList
+	FUNCTION OPENPAR { stack_push(); } ArgsList CLOSEPAR
 		{
 			list_replace(stack_cur, &$1->c);
 			stack_pop();
@@ -358,8 +358,7 @@ Function:
 	;
 
 ArgsList:
-	CLOSEPAR
-	| Args CLOSEPAR
+	| Args
 	;
 
 Args:
