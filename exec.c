@@ -38,6 +38,19 @@ const char *exec_cmd2str[] = {
 
 struct exec *exec_template;
 
+struct exec *exec_new_template(void) {
+	struct exec *e;
+
+	e = malloc(sizeof(*e));
+	if (e == NULL) {
+		ERRS("malloc(%d): %s", sizeof(*e), strerror(errno));
+		exit(1);
+	}
+	e->nbvars = 0;
+	INIT_LIST_HEAD(&e->vars);
+	return e;
+}
+
 struct exec_node *exec_new(enum exec_type type, void *value) {
 	struct exec_node *n;
 
@@ -352,7 +365,8 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	}
 }
 
-void exec_display(struct exec_node *n) {
+void exec_display(struct exec *e) {
+
 	printf(
 		"digraph finite_state_machine {\n"
 		"\tnode [ fontname=\"Helvetica\" ]\n"
@@ -364,7 +378,7 @@ void exec_display(struct exec_node *n) {
 
 	);
 
-	exec_display_recurse(n, 1);
+	exec_display_recurse(e->program, 1);
 
 	printf("}\n");
 }

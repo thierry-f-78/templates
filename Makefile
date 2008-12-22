@@ -11,11 +11,12 @@ LDFLAGS =
 CFLAGS = -Wall -g -O0
 YFLAGS = -v
 
-OBJS =  template.o syntax.o exec.o
+OBJS =  template.o syntax.o exec.o client.o
 FILES = template.h template.c syntax.c syntax.h
 
 #YACC_DEBUG = -t
-CPPFLAGS = -DDEBUGING -DYYDEBUG
+#CPPFLAGS = -DDEBUGING -DYYDEBUG
+CPPFLAGS =
 
 ifneq ($(V),1)
 

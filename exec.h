@@ -77,26 +77,30 @@ struct exec {
 	struct list_head vars;
 };
 
-static inline void exec_new_template(void) {
-	exec_template = malloc(sizeof(*exec_template));
-	if (exec_template == NULL) {
-		ERRS("malloc(%d): %s", sizeof(*exec_template), strerror(errno));
-		exit(1);
-	}
-	exec_template->nbvars = 0;
-	INIT_LIST_HEAD(&exec_template->vars);
-}
-static inline void exec_set_template(struct exec_node *n) {
-	exec_template->program = n;
-}
-static inline struct exec *exec_get_template(void) {
-	return exec_template;
-}
+/**
+ * New template
+ */
+struct exec *exec_new_template(void);
+
+/**
+ * Parse file for template
+ * @param e is template id
+ * @param file is filename tio parse
+ */
+void exec_parse(struct exec *e, char *file);
+
+/**
+ * Build dot graph for debugging program
+ * @param e is template id
+ */
+void exec_display(struct exec *e);
+
+
+/* private */
 struct exec_node *exec_new(enum exec_type type, void *value);
 char *exec_blockdup(char *str);
 char *exec_strdup(char *str);
 void *exec_var(char *str);
 void *exec_func(char *str);
-void exec_display(struct exec_node *n);
 
 #endif

@@ -36,6 +36,7 @@
 
 */
 
+#ifdef DEBUGING
 static char str[128];
 
 const char *n2str(int code) {
@@ -83,7 +84,6 @@ const char *n2str(int code) {
 	}
 }
 
-#ifdef DEBUGING
 #  define DEBUG(fmt, args...) \
           fprintf(stderr, "\e[34m[%s:%s:%d] " fmt "\e[0m\n", \
 			         __FILE__, __FUNCTION__, __LINE__, ##    args);
@@ -93,12 +93,23 @@ const char *n2str(int code) {
 #	define RETURN(xxx) \
 	       DEBUG("return %s (%d)", n2str(xxx), xxx); \
 	       return xxx;
+
+#	define D \
+	       do { DEBUGI("***[%s]***", yytext); } while (0); 
+
+#	define A \
+	       do { DEBUGI("***[%s]***", yytext); } while (0); 
+
+#	undef A
+#	define A
+
 #else
 
 #	define RETURN(xxx) return xxx;
+#	define A
+#	define D
 
 #endif
-
 
 extern int yyerror(char *str);
 extern int yyinputfd;
@@ -109,15 +120,6 @@ extern int yyinputfd;
 		if ((result) == 0) \
 			(result) = YY_NULL; \
 	} while(0);
-
-#define D \
-	do { DEBUGI("***[%s]***", yytext); } while (0); 
-
-#define A \
-	do { DEBUGI("***[%s]***", yytext); } while (0); 
-
-#undef A
-#define A
 
 %}
 

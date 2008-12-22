@@ -16,6 +16,8 @@
 #	define DEBUG(fmt, args...) \
 	       fprintf(stderr, "\e[33m[%s:%s:%d] " fmt "\e[0m\n", \
                   __FILE__, __FUNCTION__, __LINE__, ##args);
+#else
+#	define DEBUG(fmt, args...)
 #endif
 
 struct exec_node *base;
@@ -164,7 +166,6 @@ If:
 			my_list_add_tail(&$3->b, &$1->c);
 			$$ = $1;
 		}
-	;
 
 For:
 	FOR OPENPAR Expression SEP RValue SEP Expression CLOSEPAR Block
@@ -379,18 +380,17 @@ Args:
 	;
 %%
 
-int main(void) {
-	char *file = "test.html";
+void exec_parse(struct exec *e, char *file) {
 	struct exec_node *n;
-	struct exec *e;
 
-	//yydebug = 1;
+#ifdef DEBUGING
+	yydebug = 1;
+#endif
+
+	exec_template = e;
 
 	/* init stack */
 	INIT_LIST_HEAD(stack_cur);
-
-	/* init new template */
-	exec_new_template();
 
 	/* open, parse file and close */
 	yyinputfd = open(file, O_RDONLY);
@@ -404,12 +404,5 @@ int main(void) {
 	/* final and first node, set it into template */
 	n = exec_new(X_COLLEC, NULL);
 	list_replace(stack_cur, &n->c);
-	exec_set_template(n);
-
-	/* get exec */
-	e = exec_get_template();
-
-	exec_display(n);
-
-	return 0;
+	e->program = n;
 }
