@@ -51,10 +51,18 @@ extern struct exec *exec_template;
 #define ERRS(fmt, args...) \
 	fprintf(stderr, "[%s:%s:%d] " fmt "\n", __FILE__, __FUNCTION__, __LINE__, ##args);
 
+typedef void *(*exec_function)(void *easy, void *args[], int nargs);
+
 struct exec_vars {
 	struct list_head chain;
 	char *name;
 	int offset;
+};
+
+struct exec_funcs {	
+	struct list_head chain;
+	char *name;
+	exec_function f;
 };
 
 struct exec_node {
@@ -75,6 +83,7 @@ struct exec {
 	struct exec_node *program;
 	int nbvars;
 	struct list_head vars;
+	struct list_head funcs;
 };
 
 /**
@@ -95,6 +104,13 @@ void exec_parse(struct exec *e, char *file);
  */
 void exec_display(struct exec *e);
 
+/**
+ * Define function
+ * @param e is template id
+ * @param name is the neme of the function in template
+ * @param f is function ptr
+ */
+void exec_declare_func(struct exec *e, char *name, exec_function f);
 
 /* private */
 struct exec_node *exec_new(enum exec_type type, void *value);

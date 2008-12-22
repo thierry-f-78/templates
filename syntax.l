@@ -178,11 +178,41 @@ block           "%>"([^<]|<[^\%])"<%"
 ">="       {D; yylval = exec_new(X_GE,     NULL); RETURN(GE); }
 "<="       {D; yylval = exec_new(X_LE,     NULL); RETURN(LE); }
 
-{str}      {D; yylval = exec_new(X_STRING,   exec_strdup(yytext));  RETURN(STR); }
-{num}      {D; yylval = exec_new(X_INTEGER,  (void *)atoi(yytext)); RETURN(NUM); }
-{var}      {D; yylval = exec_new(X_VAR,      exec_var(yytext));     RETURN(VAR); }
-"display"  {D; yylval = exec_new(X_DISPLAY,  NULL);                 RETURN(DISPLAY); }
-{function} {D; yylval = exec_new(X_FUNCTION, exec_func(yytext));    RETURN(FUNCTION); }
+"display"  {D;  yylval = exec_new(X_DISPLAY,  NULL); RETURN(DISPLAY); }
+
+{str}      {
+		void *val;
+		D;
+		val = exec_strdup(yytext);
+		yylval = exec_new(X_STRING, val);
+		RETURN(STR);
+	}
+{num}      {
+		void *val;
+		char *error;
+		D;
+		val = (void *)strtol(yytext, &error, 0);
+		if (*error != '\0')
+			yyerror("Not a number");
+		yylval = exec_new(X_INTEGER, val);
+		RETURN(NUM);
+	}
+{var}      {
+		void *val;
+		D;
+		val = exec_var(yytext);
+		yylval = exec_new(X_VAR, val);
+		RETURN(VAR);
+	}
+{function} {
+		void *val;
+		D;
+		val = exec_func(yytext);
+		if (val == NULL)
+			yyerror("Function not found");
+		yylval = exec_new(X_FUNCTION, val);
+		RETURN(FUNCTION);
+	}
 
 {space}    {A; }
 .          {D; yyerror("unexpected character"); }

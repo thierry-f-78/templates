@@ -48,6 +48,7 @@ struct exec *exec_new_template(void) {
 	}
 	e->nbvars = 0;
 	INIT_LIST_HEAD(&e->vars);
+	INIT_LIST_HEAD(&e->funcs);
 	return e;
 }
 
@@ -140,8 +141,50 @@ void *exec_var(char *str) {
 	return v;
 }
 
+void exec_declare_func(struct exec *e, char *name, exec_function fc) {
+	struct exec_funcs *f;
+
+	/* check if the function exists */
+	list_for_each_entry(f, &e->funcs, chain) {
+		if (strcmp(f->name, name)==0)
+			break;
+	}
+	if (&f->chain != &e->funcs)
+		return; /* already exists */
+	
+	/* memory for func */
+	f = malloc(sizeof(*f));
+	if (f == NULL) {
+		ERRS("malloc(%d): %s", sizeof(*f), strerror(errno));
+		exit(1);
+	}
+
+	/* copy function ptr */
+	f->f = fc;
+
+	/* copy var name */
+	f->name = strdup(name);
+	if (f->name == NULL) {
+		ERRS("strdup(\"%s\"): %s", name, strerror(errno));
+		exit(1);
+	}
+
+	/* chain */
+	list_add_tail(&f->chain, &e->funcs);
+}
+
 void *exec_func(char *str) {
-	return exec_new(X_FUNCTION, NULL);
+	struct exec_funcs *f;
+
+	/* check if the function exists */
+	list_for_each_entry(f, &exec_template->funcs, chain) {
+		if (strcmp(f->name, str)==0)
+			break;
+	}
+	if (&f->chain != &exec_template->funcs)
+		return f;
+
+	return NULL;
 }
 
 char *replace_n(char *str) {
@@ -289,14 +332,17 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	case X_FUNCTION:
 		if (display_ptr == 1)
 			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
-			       "{b=%p|next=%p|prev=%p}}|%s|%p}\" ]\n",
+			       "{b=%p|next=%p|prev=%p}}|%s|%s(%p)}\" ]\n",
 			       n, n,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
-			       exec_cmd2str[n->type], n->v.ptr);
+			       exec_cmd2str[n->type],
+			       ((struct exec_funcs *)n->v.ptr)->name,
+			       ((struct exec_funcs *)n->v.ptr)->f);
 		else
-			printf("\t\"%p\" [ label=\"{%s|%p}\" ]\n",
-			       n, exec_cmd2str[n->type], n->v.ptr);
+			printf("\t\"%p\" [ label=\"{%s|%s(%p)}\" ]\n",
+			       n, exec_cmd2str[n->type], ((struct exec_funcs *)n->v.ptr)->name,
+					 ((struct exec_funcs *)n->v.ptr)->f);
 		break;
 
 	case X_VAR:
