@@ -107,6 +107,21 @@ int yyerror(char *str) {
 %token AND
 %token OR
 
+%left ADD
+%left SUB
+%left MUL
+%left DIV
+%left MOD
+
+%left EQUAL
+%left DIFF
+%left LT
+%left GT
+%left LE
+%left GE
+%left AND
+%left OR
+
 %start Input
 
 %%
@@ -115,7 +130,10 @@ Input:
 	| Input InputElement
 
 InputElement:
-	Expr
+	PRINT               { my_list_add_tail(&$1->b, stack_cur); }
+	| BREAK SEP         { my_list_add_tail(&$1->b, stack_cur); }
+	| CONT SEP          { my_list_add_tail(&$1->b, stack_cur); }
+	| Expression SEP    { my_list_add_tail(&$1->b, stack_cur); }
 	| For               { my_list_add_tail(&$1->b, stack_cur); }
 	| While             { my_list_add_tail(&$1->b, stack_cur); }
 	| If                { my_list_add_tail(&$1->b, stack_cur); }
@@ -204,13 +222,6 @@ SwitchKey:
 			n = exec_new(X_NULL, NULL);
 			my_list_add_tail(&n->b, stack_cur);
 		}
-
-Expr:
-	PRINT                     { my_list_add_tail(&$1->b, stack_cur); }
-	| BREAK SEP               { my_list_add_tail(&$1->b, stack_cur); }
-	| CONT SEP                { my_list_add_tail(&$1->b, stack_cur); }
-	| Expression SEP          { my_list_add_tail(&$1->b, stack_cur); }
-	;
 
 Expression:
 	RValue                    { $$ = $1; }
