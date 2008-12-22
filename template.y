@@ -211,11 +211,6 @@ SwitchKey:
 			my_list_add_tail(&n->b, stack_cur);
 		}
 
-Expressions:
-	Expr
-	| Expressions Expr
-	;
-
 Expr:
 	| PRINT                   { my_list_add_tail(&$1->b, stack_cur); }
 	| BREAK SEP               { my_list_add_tail(&$1->b, stack_cur); }
