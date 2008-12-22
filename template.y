@@ -51,7 +51,7 @@ int stack_idx = 0;
 	list_add_tail(new, head);
 
 int yyerror(char *str) {
-	fprintf (stderr, "\n%s en '%s'\n\n", str, yytext);
+	fprintf (stderr, "\nline %d: %s en '%s'\n\n", yylineno, str, yytext);
 	exit(1);
 }
 
