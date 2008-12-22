@@ -130,6 +130,7 @@ int yyerror(char *str) {
 
 Input:
 	| Input InputElement
+	;
 
 InputElement:
 	PRINT               { my_list_add_tail(&$1->b, stack_cur); }
@@ -193,6 +194,7 @@ Block:
 			stack_pop();
 			$$ = n;
 		}
+	;
 
 Switch:
 	SWITCH OPENPAR { stack_push(); } SwitchArgs { my_list_add_tail(&$4->b, stack_cur); } CLOSEPAR OPENBLOCK IntoSwitch CLOSEBLOCK
@@ -201,10 +203,12 @@ Switch:
 			stack_pop();
 			$$ = $1;
 		}
+	;
 
 IntoSwitch:
 	SwitchBlock
-	| IntoSwitch SwitchBlock 
+	| IntoSwitch SwitchBlock
+	;
 
 SwitchBlock:
 	SwitchKey { stack_push(); } Input
@@ -215,6 +219,7 @@ SwitchBlock:
 			stack_pop();
 			my_list_add_tail(&n->b, stack_cur);
 		}
+	;
 
 SwitchKey:
 	CASE NUM COLON   { my_list_add_tail(&$2->b, stack_cur); }
@@ -338,15 +343,18 @@ Display:
 			my_list_add_tail(&$3->b, &$1->c);
 			$$ = $1;
 		}
+	;
 
 SwitchArgs:
 	VAR        { $$ = $1; }
 	| Function { $$ = $1; }
+	;
 
 DisplayArg:
 	VAR        { $$ = $1; }
 	| Function { $$ = $1; }
 	| STR      { $$ = $1; }
+	;
 
 Function:
 	FUNCTION OPENPAR { stack_push(); } ArgsList CLOSEPAR
