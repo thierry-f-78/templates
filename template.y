@@ -157,14 +157,16 @@ For:
 	;
 
 Block:
-	{ stack_push(); } InputElement {
+	{ stack_push(); } InputElement
+		{
 			struct exec_node *n;
 			n = exec_new(X_COLLEC, NULL);
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			$$ = n;
 		}
-	| OPENBLOCK { stack_push(); } Input CLOSEBLOCK {
+	| OPENBLOCK { stack_push(); } Input CLOSEBLOCK
+		{
 			struct exec_node *n;
 			n = exec_new(X_COLLEC, NULL);
 			list_replace(stack_cur, &n->c);
@@ -212,14 +214,16 @@ Expr:
 
 Expression:
 	RValue                    { $$ = $1; }
-	| LValue Expression       {
+	| LValue Expression
+		{
 			my_list_add_tail(&$2->b, &$1->c);
 			$$ = $1;
 		}
 	;
 
 LValue:
-	VAR ASSIGN                {
+	VAR ASSIGN
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			$$ = $2;
 		}
@@ -227,66 +231,79 @@ LValue:
 
 RValue:
 	Value                     { $$ = $1; }
-	| RValue ADD RValue       {
+	| RValue ADD RValue 
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue SUB RValue       {
+	| RValue SUB RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue MUL RValue       {
+	| RValue MUL RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 		}
-	| RValue DIV RValue       {
-			my_list_add_tail(&$1->b, &$2->c);
-			my_list_add_tail(&$3->b, &$2->c);
-			$$ = $2;
-		}
-	| RValue MOD RValue       {
+	| RValue DIV RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue EQUAL RValue     {
+	| RValue MOD RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue DIFF RValue     {
+	| RValue EQUAL RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue AND RValue        {
+	| RValue DIFF RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue OR RValue        {
+	| RValue AND RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue LT RValue        {
+	| RValue OR RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue GT RValue        {
+	| RValue LT RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue LE RValue        {
+	| RValue GT RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
 		}
-	| RValue GE RValue        {
+	| RValue LE RValue
+		{
+			my_list_add_tail(&$1->b, &$2->c);
+			my_list_add_tail(&$3->b, &$2->c);
+			$$ = $2;
+		}
+	| RValue GE RValue
+		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);
 			$$ = $2;
@@ -303,7 +320,8 @@ Value:
 	;
 
 Display:
-	DISPLAY OPENPAR DisplayArg CLOSEPAR {
+	DISPLAY OPENPAR DisplayArg CLOSEPAR
+		{
 			my_list_add_tail(&$3->b, &$1->c);
 			$$ = $1;
 		}
@@ -318,7 +336,8 @@ DisplayArg:
 	| STR      { $$ = $1; }
 
 Function:
-	FUNCTION OPENPAR { stack_push(); } ArgsList {
+	FUNCTION OPENPAR { stack_push(); } ArgsList
+		{
 			list_replace(stack_cur, &$1->c);
 			stack_pop();
 			$$ = $1;
