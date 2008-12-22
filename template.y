@@ -204,7 +204,7 @@ SwitchKey:
 		}
 
 Expr:
-	| PRINT                   { my_list_add_tail(&$1->b, stack_cur); }
+	PRINT                     { my_list_add_tail(&$1->b, stack_cur); }
 	| BREAK SEP               { my_list_add_tail(&$1->b, stack_cur); }
 	| CONT SEP                { my_list_add_tail(&$1->b, stack_cur); }
 	| Expression SEP          { my_list_add_tail(&$1->b, stack_cur); }
@@ -295,7 +295,7 @@ RValue:
 	;
 
 Value:
-	| VAR      { DEBUG("> VAR  %p", $1); $$ = $1; }
+	VAR        { DEBUG("> VAR  %p", $1); $$ = $1; }
 	| NUM      { DEBUG("> NUM  %p", $1); $$ = $1; }
 	| STR      { DEBUG("> STR  %p", $1); $$ = $1; }
 	| Function { DEBUG("> FUNC %p", $1); $$ = $1; }
@@ -313,7 +313,7 @@ SwitchArgs:
 	| Function { $$ = $1; }
 
 DisplayArg:
-	| VAR      { $$ = $1; }
+	VAR        { $$ = $1; }
 	| Function { $$ = $1; }
 	| STR      { $$ = $1; }
 
