@@ -122,6 +122,8 @@ int yyerror(char *str) {
 %left AND
 %left OR
 
+%left COMMA
+
 %start Input
 
 %%
@@ -362,7 +364,7 @@ ArgsList:
 
 Args:
 	RValue              { my_list_add_tail(&$1->b, stack_cur); }
-	| Args COMMA RValue { my_list_add_tail(&$3->b, stack_cur); }
+	| Args COMMA Args
 	;
 %%
 
