@@ -126,7 +126,8 @@ extern int yyinputfd;
 space           [ \t]+
 function        [a-zA-Z][a-zA-Z0-9]*
 var             $[a-zA-Z][a-zA-Z0-9]*
-num             [0-9]+
+num             -?[0-9]+
+hex             0x[0-9a-fA-F]+
 str             \"[^\"]*\"
 block           "%>"([^<]|<[^\%])"<%"
 
@@ -187,7 +188,7 @@ block           "%>"([^<]|<[^\%])"<%"
 		yylval = exec_new(X_STRING, val);
 		RETURN(STR);
 	}
-{num}      {
+({num}|{hex}) {
 		void *val;
 		char *error;
 		D;
