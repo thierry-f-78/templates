@@ -37,6 +37,7 @@ enum exec_type {
 	X_INTEGER,
 	X_STRING,
 
+	X_SWITCH,
 	X_FOR,
 	X_WHILE,
 	X_IF,

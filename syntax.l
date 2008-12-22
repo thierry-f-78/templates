@@ -39,6 +39,7 @@
 static char str[128];
 
 const char *n2str(int code) {
+	/* pour inserer vaec vim: ":r !./extract.sh" */
 	switch (code) {
 	case 258: return "PRINT";
 	case 259: return "OPENPAR";
@@ -53,21 +54,29 @@ const char *n2str(int code) {
 	case 268: return "FOR";
 	case 269: return "WHILE";
 	case 270: return "IF";
-	case 271: return "SEP";
-	case 272: return "COMMA";
-	case 273: return "ASSIGN";
-	case 274: return "ADD";
-	case 275: return "SUB";
-	case 276: return "MUL";
-	case 277: return "DIV";
-	case 278: return "MOD";
-	case 279: return "EQUAL";
-	case 280: return "LT";
-	case 281: return "GT";
-	case 282: return "LE";
-	case 283: return "GE";
-	case 284: return "AND";
-	case 285: return "OR";
+	case 271: return "ELSE";
+	case 272: return "BREAK";
+	case 273: return "CONT";
+	case 274: return "SWITCH";
+	case 275: return "CASE";
+	case 276: return "DEFAULT";
+	case 277: return "SEP";
+	case 278: return "COMMA";
+	case 279: return "ASSIGN";
+	case 280: return "COLON";
+	case 281: return "ADD";
+	case 282: return "SUB";
+	case 283: return "MUL";
+	case 284: return "DIV";
+	case 285: return "MOD";
+	case 286: return "EQUAL";
+	case 287: return "DIFF";
+	case 288: return "LT";
+	case 289: return "GT";
+	case 290: return "LE";
+	case 291: return "GE";
+	case 292: return "AND";
+	case 293: return "OR";
 	default:
 		snprintf(str, 128, "Unknown code <%d>", code);
 		return str;
@@ -139,6 +148,7 @@ block           "%>"([^<]|<[^\%])"<%"
 
 ","        {D; RETURN(COMMA); }
 ";"        {D; RETURN(SEP); }
+":"        {D; RETURN(COLON); }
 
 "for"      {D; yylval = exec_new(X_FOR,    NULL); RETURN(FOR); }
 "while"    {D; yylval = exec_new(X_WHILE,  NULL); RETURN(WHILE); }
@@ -146,6 +156,9 @@ block           "%>"([^<]|<[^\%])"<%"
 "else"     {D; RETURN(ELSE); }
 "break"    {D; yylval = exec_new(X_BREAK,  NULL); RETURN(BREAK); }
 "continue" {D; yylval = exec_new(X_CONT,   NULL); RETURN(CONT); }
+"switch"   {D; yylval = exec_new(X_SWITCH, NULL); RETURN(SWITCH); }
+"case"     {D; RETURN(CASE); }
+"default"  {D; RETURN(DEFAULT); }
 
 "="        {D; yylval = exec_new(X_ASSIGN, NULL); RETURN(ASSIGN); }
 "+"        {D; yylval = exec_new(X_ADD,    NULL); RETURN(ADD); }

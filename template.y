@@ -81,10 +81,14 @@ int yyerror(char *str) {
 %token ELSE
 %token BREAK
 %token CONT
+%token SWITCH
+%token CASE
+%token DEFAULT
 
 %token SEP
 %token COMMA
 %token ASSIGN
+%token COLON
 
 // operators
 %token ADD
@@ -111,10 +115,11 @@ Input:
 	| Input InputElement
 
 InputElement:
+	Expr
 	| For               { my_list_add_tail(&$1->b, stack_cur); }
 	| While             { my_list_add_tail(&$1->b, stack_cur); }
 	| If                { my_list_add_tail(&$1->b, stack_cur); }
-	| Expr
+	| Switch            { my_list_add_tail(&$1->b, stack_cur); }
 	;
 
 While:
@@ -174,6 +179,37 @@ For:
 			$$ = $1;
 		}
 	;
+
+Switch:
+	SWITCH OPENPAR { stack_push(); } SwitchArgs { my_list_add_tail(&$4->b, stack_cur); } CLOSEPAR OPENBLOCK IntoSwitch CLOSEBLOCK
+		{
+			list_replace(stack_cur, &$1->c);
+			stack_pop();
+			$$ = $1;
+		}
+
+IntoSwitch:
+	SwitchBlock
+	| IntoSwitch SwitchBlock 
+
+SwitchBlock:
+	SwitchKey { stack_push(); } Input
+		{
+			struct exec_node *n;
+			n = exec_new(X_COLLEC, NULL);
+			list_replace(stack_cur, &n->c);
+			stack_pop();
+			my_list_add_tail(&n->b, stack_cur);
+		}
+
+SwitchKey:
+	CASE NUM COLON   { my_list_add_tail(&$2->b, stack_cur); }
+	| DEFAULT COLON
+		{
+			struct exec_node *n;
+			n = exec_new(X_NULL, NULL);
+			my_list_add_tail(&n->b, stack_cur);
+		}
 
 Expressions:
 	Expr
@@ -284,6 +320,10 @@ Display:
 			my_list_add_tail(&$3->b, &$1->c);
 			$$ = $1;
 		}
+
+SwitchArgs:
+	VAR        { $$ = $1; }
+	| Function { $$ = $1; }
 
 DisplayArg:
 	| VAR      { $$ = $1; }
