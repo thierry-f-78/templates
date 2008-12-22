@@ -123,33 +123,40 @@ InputElement:
 	;
 
 While:
-	WHILE OPENPAR RValue CLOSEPAR OPENBLOCK { stack_push(); } Input CLOSEBLOCK
-		{
-			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL);
-			list_replace(stack_cur, &n->c);
-			stack_pop();
-			my_list_add_tail(&$3->b, &$1->c);
-			my_list_add_tail(&n->b, &$1->c);
-			$$ = $1;
-		}
-	;
-
-If:
-	IF OPENPAR RValue CLOSEPAR IfBlock
+	WHILE OPENPAR RValue CLOSEPAR Block
 		{
 			my_list_add_tail(&$3->b, &$1->c);
 			my_list_add_tail(&$5->b, &$1->c);
 			$$ = $1;
 		}
-	| If ELSE IfBlock
+	;
+
+If:
+	IF OPENPAR RValue CLOSEPAR Block
+		{
+			my_list_add_tail(&$3->b, &$1->c);
+			my_list_add_tail(&$5->b, &$1->c);
+			$$ = $1;
+		}
+	| If ELSE Block
 		{
 			my_list_add_tail(&$3->b, &$1->c);
 			$$ = $1;
 		}
 	;
 
-IfBlock:
+For:
+	FOR OPENPAR Expression SEP RValue SEP Expression CLOSEPAR Block
+		{
+			my_list_add_tail(&$3->b, &$1->c);
+			my_list_add_tail(&$5->b, &$1->c);
+			my_list_add_tail(&$7->b, &$1->c);
+			my_list_add_tail(&$9->b, &$1->c);
+			$$ = $1;
+		}
+	;
+
+Block:
 	{ stack_push(); } InputElement {
 			struct exec_node *n;
 			n = exec_new(X_COLLEC, NULL);
@@ -164,21 +171,6 @@ IfBlock:
 			stack_pop();
 			$$ = n;
 		}
-
-For:
-	FOR OPENPAR Expression SEP RValue SEP Expression CLOSEPAR OPENBLOCK { stack_push(); } Input CLOSEBLOCK
-		{
-			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL);
-			list_replace(stack_cur, &n->c);
-			stack_pop();
-			my_list_add_tail(&$3->b, &$1->c);
-			my_list_add_tail(&$5->b, &$1->c);
-			my_list_add_tail(&$7->b, &$1->c);
-			my_list_add_tail(&n->b, &$1->c);
-			$$ = $1;
-		}
-	;
 
 Switch:
 	SWITCH OPENPAR { stack_push(); } SwitchArgs { my_list_add_tail(&$4->b, stack_cur); } CLOSEPAR OPENBLOCK IntoSwitch CLOSEBLOCK
