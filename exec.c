@@ -347,6 +347,7 @@ void exec_display_recurse(struct exec_node *n, int first) {
 
 	list_for_each_entry(p, &n->c, b) {
 		printf("\t\"%p\" -> \"%p\"\n", n, p);
+		fflush(stdout);
 		exec_display_recurse(p, 0);
 	}
 }
