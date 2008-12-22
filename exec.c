@@ -187,6 +187,15 @@ void *exec_func(char *str) {
 	return NULL;
 }
 
+void exec_set_parents(struct exec_node *n) {
+	struct exec_node *p;
+
+	list_for_each_entry(p, &n->c, b) {
+		p->p = n;
+		exec_set_parents(p);
+	}
+}
+
 char *replace_n(char *str) {
 	char *p;
 	char *dest;
@@ -318,9 +327,9 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	case X_BREAK:
 	case X_SWITCH:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
+			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s}\" ]\n",
-			       n, n,
+			       n, n, n->p,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       exec_cmd2str[n->type]);
@@ -331,9 +340,9 @@ void exec_display_recurse(struct exec_node *n, int first) {
 
 	case X_FUNCTION:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
+			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s|%s(%p)}\" ]\n",
-			       n, n,
+			       n, n, n->p,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       exec_cmd2str[n->type],
@@ -347,9 +356,9 @@ void exec_display_recurse(struct exec_node *n, int first) {
 
 	case X_VAR:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
+			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s|%s (%d)}\" ]\n",
-			       n, n,
+			       n, n, n->p,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       exec_cmd2str[n->type], n->v.var->name, n->v.var->offset);
@@ -360,9 +369,9 @@ void exec_display_recurse(struct exec_node *n, int first) {
 
 	case X_INTEGER:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
+			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s|%d}\" ]\n",
-			       n, n,
+			       n, n, n->p,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       exec_cmd2str[n->type], n->v.integer);
@@ -375,9 +384,9 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	case X_STRING:
 		c = replace_n(n->v.string);
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
+			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s|\\\"%s\\\"}\" ]\n",
-			       n, n,
+			       n, n, n->p,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       exec_cmd2str[n->type], c);
@@ -388,9 +397,9 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	
 	default:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{%p|{c=%p|next=%p|prev=%p}|"
+			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|type=%d|%p}\" ]\n",
-			       n, n,
+			       n, n, n->p,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       n->type, n->v.ptr);

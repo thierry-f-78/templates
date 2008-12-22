@@ -52,6 +52,7 @@ extern struct exec *exec_template;
 	fprintf(stderr, "[%s:%s:%d] " fmt "\n", __FILE__, __FUNCTION__, __LINE__, ##args);
 
 typedef void *(*exec_function)(void *easy, void *args[], int nargs);
+typedef ssize_t (*exec_write)(void *easy, const void *buf, size_t count);
 
 struct exec_vars {
 	struct list_head chain;
@@ -84,6 +85,8 @@ struct exec {
 	int nbvars;
 	struct list_head vars;
 	struct list_head funcs;
+	void *arg;
+	exec_write w;
 };
 
 /**
@@ -112,11 +115,32 @@ void exec_display(struct exec *e);
  */
 void exec_declare_func(struct exec *e, char *name, exec_function f);
 
+/**
+ * set easy argument
+ * @param e is template id
+ * @param easy is easy arg
+ */
+static inline
+void exec_set_easy(struct exec *e, void *easy) {
+	e->arg = easy;
+}
+
+/**
+ * set write function
+ * @param e is template id
+ * @param w write function
+ */
+static inline
+void exec_set_write(struct exec *e, exec_write w) {
+	e->w = w;
+}
+
 /* private */
 struct exec_node *exec_new(enum exec_type type, void *value);
 char *exec_blockdup(char *str);
 char *exec_strdup(char *str);
 void *exec_var(char *str);
 void *exec_func(char *str);
+void exec_set_parents(struct exec_node *n);
 
 #endif

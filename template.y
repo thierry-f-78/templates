@@ -405,4 +405,7 @@ void exec_parse(struct exec *e, char *file) {
 	n = exec_new(X_COLLEC, NULL);
 	list_replace(stack_cur, &n->c);
 	e->program = n;
+
+	n->p = NULL;
+	exec_set_parents(n);
 }
