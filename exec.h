@@ -53,6 +53,8 @@ extern struct exec *exec_template;
 
 #define EXEC_MAX_ARGS 20
 
+#define STACKSIZE 1024
+
 union exec_args {
 	int integer;
 	char *string;
@@ -101,6 +103,11 @@ struct exec_run {
 	exec_write w;
 	struct exec *e;
 	struct exec_node *n;
+	union {
+		int integer;
+		struct exec_node *n;
+	} stack[STACKSIZE];
+	int stack_ptr;
 };
 
 /**

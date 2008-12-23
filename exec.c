@@ -73,6 +73,7 @@ struct exec_run *exec_new_run(struct exec *e) {
 	r->arg = e->arg;
 	r->w = e->w;
 	r->e = e;
+	r->stack_ptr = 0;
 	r->n = e->program;
 
 	return r;

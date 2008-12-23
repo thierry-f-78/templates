@@ -74,6 +74,10 @@ static const exec_exec_func node2func[] = {
 	[X_CONT] = exec_X_CONT
 };
 
+void exec_run_now(struct exec_run *r) {
+	exec_NODE(r, r->n);
+}
+
 static void *exec_X_NULL(struct exec_run *r, struct exec_node *n) {
 	return NULL;
 }
@@ -618,9 +622,5 @@ static void *exec_X_INTEGER(struct exec_run *r, struct exec_node *n) {
 **********************************************************************/
 static void *exec_X_STRING(struct exec_run *r, struct exec_node *n) {
 	return n->v.ptr;
-}
-
-void exec_run_now(struct exec_run *r) {
-	exec_NODE(r, r->n);
 }
 
