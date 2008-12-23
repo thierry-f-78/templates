@@ -442,7 +442,45 @@ static void *exec_X_FUNCTION(struct exec_run *r, struct exec_node *n) {
 	return ret;
 }
 
+
+/**********************************************************************
+* 
+* X_SWITCH
+*
+**********************************************************************/
 static void *exec_X_SWITCH(struct exec_run *r, struct exec_node *n) {
+	struct exec_node *var;
+	struct exec_node *val;
+	struct exec_node *exec;
+	int ok;
+	void *ret;
+
+	var = container_of(n->c.next, struct exec_node, b);
+	exec = var;
+	ok = 0;
+
+	while (1) {
+		val  = container_of(exec->b.next, struct exec_node, b);
+		exec = container_of(val->b.next,  struct exec_node, b);
+
+		/* on afait le tour */
+		if (&val->b == &n->c)
+			break;
+
+		/* on execute si:
+		   - on a deja executé
+		   - c'est default
+		   - c'est la bonne valeur */
+		if (ok == 1 || val->type == X_NULL || val->v.ptr == exec_NODE(r, var)) {
+			ret = exec_NODE(r, exec);
+			ok = 1;
+
+			/* c'est ficni si on a recu un break; */
+			if (ret != NULL)
+				break;
+		}
+	}
+
 	return NULL;
 }
 
