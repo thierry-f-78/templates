@@ -78,7 +78,7 @@ struct exec_run *exec_new_run(struct exec *e) {
 	return r;
 }
 
-struct exec_node *exec_new(enum exec_type type, void *value) {
+struct exec_node *exec_new(enum exec_type type, void *value, int line) {
 	struct exec_node *n;
 
 	n = malloc(sizeof *n);
@@ -89,6 +89,7 @@ struct exec_node *exec_new(enum exec_type type, void *value) {
 
 	n->type = type;
 	n->v.ptr = value;
+	n->line = line;
 	INIT_LIST_HEAD(&n->c);
 
 	return n;

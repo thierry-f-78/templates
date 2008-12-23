@@ -83,6 +83,7 @@ struct exec_node {
 
 	enum exec_type type;
 	union exec_args v;
+	int line;
 };
 
 struct exec {
@@ -195,7 +196,7 @@ void exec_set_var(struct exec_run *r, struct exec_vars *v, void *val) {
 void exec_run_now(struct exec_run *r);
 
 /* private */
-struct exec_node *exec_new(enum exec_type type, void *value);
+struct exec_node *exec_new(enum exec_type type, void *value, int line);
 char *exec_blockdup(char *str);
 char *exec_strdup(char *str);
 void *exec_var(char *str);

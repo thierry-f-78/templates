@@ -182,7 +182,7 @@ Block:
 	{ stack_push(); } InputElement
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL);
+			n = exec_new(X_COLLEC, NULL, yylineno);
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			$$ = n;
@@ -190,7 +190,7 @@ Block:
 	| OPENBLOCK { stack_push(); } Input CLOSEBLOCK
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL);
+			n = exec_new(X_COLLEC, NULL, yylineno);
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			$$ = n;
@@ -219,7 +219,7 @@ SwitchBlock:
 	SwitchKey { stack_push(); } Input
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL);
+			n = exec_new(X_COLLEC, NULL, yylineno);
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			my_list_add_tail(&n->b, stack_cur);
@@ -231,7 +231,7 @@ SwitchKey:
 	| DEFAULT COLON
 		{
 			struct exec_node *n;
-			n = exec_new(X_NULL, NULL);
+			n = exec_new(X_NULL, NULL, yylineno);
 			my_list_add_tail(&n->b, stack_cur);
 		}
 
@@ -402,7 +402,7 @@ void exec_parse(struct exec *e, char *file) {
 	close(yyinputfd);
 
 	/* final and first node, set it into template */
-	n = exec_new(X_COLLEC, NULL);
+	n = exec_new(X_COLLEC, NULL, yylineno);
 	list_replace(stack_cur, &n->c);
 	e->program = n;
 

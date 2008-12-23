@@ -1,12 +1,16 @@
 #include "exec.h"
 
-#define TRACEDEBUG
+//#define TRACEDEBUG
+
+#ifdef TRACEDEBUG
+#	define DEBUG(fmt, args...) \
+	        fprintf(stderr, "\e[33m" fmt "\e[0m\n", ##args);
+#else
+#	define DEBUG(fmt, args...)
+#endif
 
 #define exec_NODE(r, n) \
 	node2func[n->type](r, n)
-
-#define DEBUG(fmt, args...) \
-        fprintf(stderr, "\e[33m" fmt "\e[0m\n", ##args);
 
 static void *exec_X_NULL(struct exec_run *r, struct exec_node *n);
 static void *exec_X_COLLEC(struct exec_run *r, struct exec_node *n);
@@ -81,12 +85,13 @@ static void *exec_X_NULL(struct exec_run *r, struct exec_node *n) {
 **********************************************************************/
 static void *exec_X_DISPLAY(struct exec_run *r, struct exec_node *n) {
 	struct exec_node *a;
+	char *s;
 
 	a = container_of(n->c.next, struct exec_node, b);
+	s = exec_NODE(r, a);
 
-	r->w(r->arg, a->v.string, strlen(a->v.string));
-
-	DEBUG("display(%s);", a->v.string);
+	DEBUG("%4d: display(%s);", n->line, s);
+	r->w(r->arg, s, strlen(s));
 	return NULL;
 }
 
@@ -96,9 +101,8 @@ static void *exec_X_DISPLAY(struct exec_run *r, struct exec_node *n) {
 *
 **********************************************************************/
 static void *exec_X_PRINT(struct exec_run *r, struct exec_node *n) {
+	DEBUG("%4d: print(%s);", n->line, n->v.string);
 	r->w(r->arg, n->v.string, strlen(n->v.string));
-
-	DEBUG("print(%s);", n->v.string);
 	return NULL;
 }
 
@@ -109,9 +113,16 @@ static void *exec_X_PRINT(struct exec_run *r, struct exec_node *n) {
 **********************************************************************/
 static void *exec_X_COLLEC(struct exec_run *r, struct exec_node *n) {
 	struct exec_node *p;
+	void *ret;
 
 	list_for_each_entry(p, &n->c, b) {
-		exec_NODE(r, p);
+		if (p->type == X_BREAK)
+			return (void *)-1;
+		if (p->type == X_CONT)
+			return (void *)-2;
+		ret = exec_NODE(r, p);
+		if (p->type == X_IF && ret != NULL)
+			return ret;
 	}
 	return NULL;
 }
@@ -389,7 +400,7 @@ static void *exec_X_ASSIGN(struct exec_run *r, struct exec_node *n) {
 	rv = container_of(lv->b.next, struct exec_node, b);
 
 	r->vars[lv->v.var->offset].ptr = exec_NODE(r, rv);
-	DEBUG("%s = %p;", lv->v.var->name, r->vars[lv->v.var->offset].ptr);
+	DEBUG("%4d: %s = %p;", n->line, lv->v.var->name, r->vars[lv->v.var->offset].ptr);
 
 	return r->vars[lv->v.var->offset].ptr;
 }
@@ -425,7 +436,7 @@ static void *exec_X_FUNCTION(struct exec_run *r, struct exec_node *n) {
 
 #ifdef TRACEDEBUG
 	*(buf+pbuf-2) = 0;
-	DEBUG("%s(%s) = %p;", n->v.func->name, buf, ret);
+	DEBUG("%4d: %s(%s) = %p;", n->line, n->v.func->name, buf, ret);
 #endif
 
 	return ret;
@@ -434,7 +445,46 @@ static void *exec_X_FUNCTION(struct exec_run *r, struct exec_node *n) {
 static void *exec_X_SWITCH(struct exec_run *r, struct exec_node *n) {
 	return NULL;
 }
+
+/**********************************************************************
+* 
+* X_FOR
+*
+**********************************************************************/
 static void *exec_X_FOR(struct exec_run *r, struct exec_node *n) {
+	struct exec_node *init;
+	struct exec_node *cond;
+	struct exec_node *next;
+	struct exec_node *exec;
+	void *ret;
+
+	init = container_of(n->c.next, struct exec_node, b);
+	cond = container_of(init->b.next, struct exec_node, b);
+	next = container_of(cond->b.next, struct exec_node, b);
+	exec = container_of(next->b.next, struct exec_node, b);
+
+	/* init */
+	exec_NODE(r, init);
+
+	while (1) {
+		
+		/* cond */
+		if (exec_NODE(r, cond) == 0)
+			break;
+
+		/* exec */
+		ret = exec_NODE(r, exec);
+		if ((long)ret == -1)
+			break;
+		/* implicit
+		if ((long)ret == -2)
+			continue;
+		*/
+
+		/* next */
+		exec_NODE(r, next);
+	}
+
 	return NULL;
 }
 
@@ -446,6 +496,7 @@ static void *exec_X_FOR(struct exec_run *r, struct exec_node *n) {
 static void *exec_X_WHILE(struct exec_run *r, struct exec_node *n) {
 	struct exec_node *cond;
 	struct exec_node *exec;
+	void *ret;
 
 	cond = container_of(n->c.next, struct exec_node, b);
 	exec = container_of(cond->b.next, struct exec_node, b);
@@ -457,15 +508,44 @@ static void *exec_X_WHILE(struct exec_run *r, struct exec_node *n) {
 			break;
 
 		/* exec code */
-		exec_NODE(r, exec);
-
+		ret = exec_NODE(r, exec);
+		if ((long)ret == -1)
+			break;
+		/* implicit
+		if ((long)ret == -2)
+			continue;
+		*/
 	}
 
 	return NULL;
 }
+
+/**********************************************************************
+* 
+* X_IF
+*
+**********************************************************************/
 static void *exec_X_IF(struct exec_run *r, struct exec_node *n) {
+	struct exec_node *cond;
+	struct exec_node *exec;
+	struct exec_node *exec_else;
+
+	cond = container_of(n->c.next, struct exec_node, b);
+	exec = container_of(cond->b.next, struct exec_node, b);
+	exec_else = container_of(exec->b.next, struct exec_node, b);
+
+	if (exec_NODE(r, cond) != 0)
+		return exec_NODE(r, exec);
+	else if (&exec_else->b != &n->c)
+		return exec_NODE(r, exec_else);
 	return NULL;
 }
+
+/**********************************************************************
+* 
+* X_BREAK
+*
+**********************************************************************/
 static void *exec_X_BREAK(struct exec_run *r, struct exec_node *n) {
 	return NULL;
 }

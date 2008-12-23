@@ -139,7 +139,7 @@ block           "%>"([^<]|<[^\%])"<%"
            	for (p=yytext; *p!='\0'; p++)
            		if (*p == '\n') 
            			yylineno++;
-           	yylval = exec_new(X_PRINT, exec_blockdup(yytext));
+           	yylval = exec_new(X_PRINT, exec_blockdup(yytext), yylineno);
            	RETURN(PRINT); 
            }
 
@@ -153,39 +153,39 @@ block           "%>"([^<]|<[^\%])"<%"
 ";"        {D; RETURN(SEP); }
 ":"        {D; RETURN(COLON); }
 
-"for"      {D; yylval = exec_new(X_FOR,    NULL); RETURN(FOR); }
-"while"    {D; yylval = exec_new(X_WHILE,  NULL); RETURN(WHILE); }
-"if"       {D; yylval = exec_new(X_IF,     NULL); RETURN(IF); }
+"for"      {D; yylval = exec_new(X_FOR,    NULL, yylineno); RETURN(FOR); }
+"while"    {D; yylval = exec_new(X_WHILE,  NULL, yylineno); RETURN(WHILE); }
+"if"       {D; yylval = exec_new(X_IF,     NULL, yylineno); RETURN(IF); }
 "else"     {D; RETURN(ELSE); }
-"break"    {D; yylval = exec_new(X_BREAK,  NULL); RETURN(BREAK); }
-"continue" {D; yylval = exec_new(X_CONT,   NULL); RETURN(CONT); }
-"switch"   {D; yylval = exec_new(X_SWITCH, NULL); RETURN(SWITCH); }
+"break"    {D; yylval = exec_new(X_BREAK,  NULL, yylineno); RETURN(BREAK); }
+"continue" {D; yylval = exec_new(X_CONT,   NULL, yylineno); RETURN(CONT); }
+"switch"   {D; yylval = exec_new(X_SWITCH, NULL, yylineno); RETURN(SWITCH); }
 "case"     {D; RETURN(CASE); }
 "default"  {D; RETURN(DEFAULT); }
 
-"="        {D; yylval = exec_new(X_ASSIGN, NULL); RETURN(ASSIGN); }
-"+"        {D; yylval = exec_new(X_ADD,    NULL); RETURN(ADD); }
-"-"        {D; yylval = exec_new(X_SUB,    NULL); RETURN(SUB); }
-"*"        {D; yylval = exec_new(X_MUL,    NULL); RETURN(MUL); }
-"/"        {D; yylval = exec_new(X_DIV,    NULL); RETURN(DIV); }
-"%"        {D; yylval = exec_new(X_MOD,    NULL); RETURN(MOD); }
+"="        {D; yylval = exec_new(X_ASSIGN, NULL, yylineno); RETURN(ASSIGN); }
+"+"        {D; yylval = exec_new(X_ADD,    NULL, yylineno); RETURN(ADD); }
+"-"        {D; yylval = exec_new(X_SUB,    NULL, yylineno); RETURN(SUB); }
+"*"        {D; yylval = exec_new(X_MUL,    NULL, yylineno); RETURN(MUL); }
+"/"        {D; yylval = exec_new(X_DIV,    NULL, yylineno); RETURN(DIV); }
+"%"        {D; yylval = exec_new(X_MOD,    NULL, yylineno); RETURN(MOD); }
 
-"=="       {D; yylval = exec_new(X_EQUAL,  NULL); RETURN(EQUAL); }
-"!="       {D; yylval = exec_new(X_DIFF,   NULL); RETURN(DIFF); }
-"&&"       {D; yylval = exec_new(X_AND,    NULL); RETURN(AND); }
-"||"       {D; yylval = exec_new(X_OR,     NULL); RETURN(OR); }
-"<"        {D; yylval = exec_new(X_LT,     NULL); RETURN(LT); }
-">"        {D; yylval = exec_new(X_GT,     NULL); RETURN(GT); }
-">="       {D; yylval = exec_new(X_GE,     NULL); RETURN(GE); }
-"<="       {D; yylval = exec_new(X_LE,     NULL); RETURN(LE); }
+"=="       {D; yylval = exec_new(X_EQUAL,  NULL, yylineno); RETURN(EQUAL); }
+"!="       {D; yylval = exec_new(X_DIFF,   NULL, yylineno); RETURN(DIFF); }
+"&&"       {D; yylval = exec_new(X_AND,    NULL, yylineno); RETURN(AND); }
+"||"       {D; yylval = exec_new(X_OR,     NULL, yylineno); RETURN(OR); }
+"<"        {D; yylval = exec_new(X_LT,     NULL, yylineno); RETURN(LT); }
+">"        {D; yylval = exec_new(X_GT,     NULL, yylineno); RETURN(GT); }
+">="       {D; yylval = exec_new(X_GE,     NULL, yylineno); RETURN(GE); }
+"<="       {D; yylval = exec_new(X_LE,     NULL, yylineno); RETURN(LE); }
 
-"display"  {D;  yylval = exec_new(X_DISPLAY,  NULL); RETURN(DISPLAY); }
+"display"  {D; yylval = exec_new(X_DISPLAY,NULL, yylineno); RETURN(DISPLAY); }
 
 {str}      {
 		void *val;
 		D;
 		val = exec_strdup(yytext);
-		yylval = exec_new(X_STRING, val);
+		yylval = exec_new(X_STRING, val, yylineno);
 		RETURN(STR);
 	}
 ({num}|{hex}) {
@@ -195,14 +195,14 @@ block           "%>"([^<]|<[^\%])"<%"
 		val = (void *)strtol(yytext, &error, 0);
 		if (*error != '\0')
 			yyerror("Not a number");
-		yylval = exec_new(X_INTEGER, val);
+		yylval = exec_new(X_INTEGER, val, yylineno);
 		RETURN(NUM);
 	}
 {var}      {
 		void *val;
 		D;
 		val = exec_var(yytext);
-		yylval = exec_new(X_VAR, val);
+		yylval = exec_new(X_VAR, val, yylineno);
 		RETURN(VAR);
 	}
 {function} {
@@ -211,7 +211,7 @@ block           "%>"([^<]|<[^\%])"<%"
 		val = exec_func(yytext);
 		if (val == NULL)
 			yyerror("Function not found");
-		yylval = exec_new(X_FUNCTION, val);
+		yylval = exec_new(X_FUNCTION, val, yylineno);
 		RETURN(FUNCTION);
 	}
 
