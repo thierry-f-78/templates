@@ -51,7 +51,17 @@ extern struct exec *exec_template;
 #define ERRS(fmt, args...) \
 	fprintf(stderr, "[%s:%s:%d] " fmt "\n", __FILE__, __FUNCTION__, __LINE__, ##args);
 
-typedef void *(*exec_function)(void *easy, void *args[], int nargs);
+#define EXEC_MAX_ARGS 20
+
+union exec_args {
+	int integer;
+	char *string;
+	struct exec_vars *var;
+	struct exec_funcs *func;
+	void *ptr;
+};
+
+typedef void *(*exec_function)(void *easy, union exec_args *args[], int nargs);
 typedef ssize_t (*exec_write)(void *easy, const void *buf, size_t count);
 
 struct exec_vars {
@@ -72,12 +82,7 @@ struct exec_node {
 	struct list_head b;  /* brother */
 
 	enum exec_type type;
-	union {
-		int integer;
-		char *string;
-		struct exec_vars *var;
-		void *ptr;
-	} v;
+	union exec_args v;
 };
 
 struct exec {
@@ -90,7 +95,7 @@ struct exec {
 };
 
 struct exec_run {
-	void *vars;
+	union exec_args *vars;
 	void *arg;
 	exec_write w;
 	struct exec *e;
@@ -186,6 +191,8 @@ static inline
 void exec_set_var(struct exec_run *r, struct exec_vars *v, void *val) {
 	((long *)r->vars)[v->offset] = (long)val;
 }
+
+void exec_run_now(struct exec_run *r);
 
 /* private */
 struct exec_node *exec_new(enum exec_type type, void *value);
