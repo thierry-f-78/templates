@@ -133,13 +133,12 @@ char *replace_n(char *str) {
 	return ret;
 }
 
-void exec_display_recurse(struct exec_node *n, int first) {
+void exec_display_recurse(struct exec_node *n, int first, FILE *fd, int display_ptr) {
 	struct exec_node *p;
 	char *c;
-	int display_ptr = 0;
 
 	if (first == 1)
-		printf("\tnode [ fillcolor=\"yellow\" ]\n");
+		fprintf(fd, "\tnode [ fillcolor=\"yellow\" ]\n");
 
 	switch (n->type) {
 
@@ -167,56 +166,56 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	case X_BREAK:
 	case X_SWITCH:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
-			       "{b=%p|next=%p|prev=%p}}|%s}\" ]\n",
-			       n, n, n->p,
-			       &n->c, n->c.next, n->c.prev,
-			       &n->b, n->b.next, n->b.prev,
-			       exec_cmd2str[n->type]);
+			fprintf(fd, "\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
+			        "{b=%p|next=%p|prev=%p}}|%s}\" ]\n",
+			        n, n, n->p,
+			        &n->c, n->c.next, n->c.prev,
+			        &n->b, n->b.next, n->b.prev,
+			        exec_cmd2str[n->type]);
 		else
-			printf("\t\"%p\" [ label=\"%s\" ]\n",
-			       n, exec_cmd2str[n->type]);
+			fprintf(fd, "\t\"%p\" [ label=\"%s\" ]\n",
+			        n, exec_cmd2str[n->type]);
 		break;
 
 	case X_FUNCTION:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
-			       "{b=%p|next=%p|prev=%p}}|%s|%s(%p)}\" ]\n",
-			       n, n, n->p,
-			       &n->c, n->c.next, n->c.prev,
-			       &n->b, n->b.next, n->b.prev,
-			       exec_cmd2str[n->type],
-			       ((struct exec_funcs *)n->v.ptr)->name,
-			       ((struct exec_funcs *)n->v.ptr)->f);
+			fprintf(fd, "\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
+			        "{b=%p|next=%p|prev=%p}}|%s|%s(%p)}\" ]\n",
+			        n, n, n->p,
+			        &n->c, n->c.next, n->c.prev,
+			        &n->b, n->b.next, n->b.prev,
+			        exec_cmd2str[n->type],
+			        ((struct exec_funcs *)n->v.ptr)->name,
+			        ((struct exec_funcs *)n->v.ptr)->f);
 		else
-			printf("\t\"%p\" [ label=\"{%s|%s(%p)}\" ]\n",
-			       n, exec_cmd2str[n->type], ((struct exec_funcs *)n->v.ptr)->name,
-					 ((struct exec_funcs *)n->v.ptr)->f);
+			fprintf(fd, "\t\"%p\" [ label=\"{%s|%s(%p)}\" ]\n",
+			        n, exec_cmd2str[n->type], ((struct exec_funcs *)n->v.ptr)->name,
+			        ((struct exec_funcs *)n->v.ptr)->f);
 		break;
 
 	case X_VAR:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
-			       "{b=%p|next=%p|prev=%p}}|%s|%s (%d)}\" ]\n",
-			       n, n, n->p,
-			       &n->c, n->c.next, n->c.prev,
-			       &n->b, n->b.next, n->b.prev,
-			       exec_cmd2str[n->type], n->v.var->name, n->v.var->offset);
+			fprintf(fd, "\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
+			        "{b=%p|next=%p|prev=%p}}|%s|%s (%d)}\" ]\n",
+			        n, n, n->p,
+			        &n->c, n->c.next, n->c.prev,
+			        &n->b, n->b.next, n->b.prev,
+			        exec_cmd2str[n->type], n->v.var->name, n->v.var->offset);
 		else
-			printf("\t\"%p\" [ label=\"{%s|%s (%d)}\" ]\n",
-			       n, exec_cmd2str[n->type], n->v.var->name, n->v.var->offset);
+			fprintf(fd, "\t\"%p\" [ label=\"{%s|%s (%d)}\" ]\n",
+			        n, exec_cmd2str[n->type], n->v.var->name, n->v.var->offset);
 		break;
 
 	case X_INTEGER:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
-			       "{b=%p|next=%p|prev=%p}}|%s|%d}\" ]\n",
-			       n, n, n->p,
-			       &n->c, n->c.next, n->c.prev,
-			       &n->b, n->b.next, n->b.prev,
-			       exec_cmd2str[n->type], n->v.integer);
+			fprintf(fd, "\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
+			        "{b=%p|next=%p|prev=%p}}|%s|%d}\" ]\n",
+			        n, n, n->p,
+			        &n->c, n->c.next, n->c.prev,
+			        &n->b, n->b.next, n->b.prev,
+			        exec_cmd2str[n->type], n->v.integer);
 		else
-			printf("\t\"%p\" [ label=\"{%s|%d}\" ]\n",
+			fprintf(fd, "\t\"%p\" [ label=\"{%s|%d}\" ]\n",
 			       n, exec_cmd2str[n->type], n->v.integer);
 		break;
 
@@ -224,47 +223,52 @@ void exec_display_recurse(struct exec_node *n, int first) {
 	case X_STRING:
 		c = replace_n(n->v.string);
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
+			fprintf(fd, "\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s|\\\"%s\\\"}\" ]\n",
 			       n, n, n->p,
 			       &n->c, n->c.next, n->c.prev,
 			       &n->b, n->b.next, n->b.prev,
 			       exec_cmd2str[n->type], c);
 		else
-			printf("\t\"%p\" [ label=\"{%s|\\\"%s\\\"}\" ]\n",
-			       n, exec_cmd2str[n->type], c);
+			fprintf(fd, "\t\"%p\" [ label=\"{%s|\\\"%s\\\"}\" ]\n",
+			        n, exec_cmd2str[n->type], c);
 		break;
 	
 	default:
 		if (display_ptr == 1)
-			printf("\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
-			       "{b=%p|next=%p|prev=%p}}|type=%d|%p}\" ]\n",
-			       n, n, n->p,
-			       &n->c, n->c.next, n->c.prev,
-			       &n->b, n->b.next, n->b.prev,
-			       n->type, n->v.ptr);
+			fprintf(fd, "\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
+			        "{b=%p|next=%p|prev=%p}}|type=%d|%p}\" ]\n",
+			        n, n, n->p,
+			        &n->c, n->c.next, n->c.prev,
+			        &n->b, n->b.next, n->b.prev,
+			        n->type, n->v.ptr);
 		else
-			printf("\t\"%p\" [ label=\"{Error: Unknown node (code %d)|%p}\" ]\n",
-			       n, n->type, n->v.ptr);
+			fprintf(fd, "\t\"%p\" [ label=\"{Error: Unknown node (code %d)|%p}\" ]\n",
+			        n, n->type, n->v.ptr);
 		break;
 
 	}
 
 	if (first == 1)
-		printf("\tnode [ fillcolor=\"white\" ]\n");
+		fprintf(fd, "\tnode [ fillcolor=\"white\" ]\n");
 
 	list_for_each_entry(p, &n->c, b) {
-		printf("\t\"%p\" -> \"%p\"\n", n, p);
-		fflush(stdout);
-		exec_display_recurse(p, 0);
+		fprintf(fd, "\t\"%p\" -> \"%p\"\n", n, p);
+		exec_display_recurse(p, 0, fd, display_ptr);
 	}
 }
 
-void exec_display(struct exec *e) {
+void exec_display(struct exec *e, char *file, int display_ptr) {
 	struct exec_vars *v;
 	FILE *fd;
 
-	printf(
+	fd = fopen(file, "w");
+	if (fd == NULL) {
+		fprintf(stderr, "fopen(\"%s\", \"w\"): %s", file, strerror(errno));
+		exit(1);
+	}
+
+	fprintf(fd,
 		"digraph finite_state_machine {\n"
 		"\tnode [ fontname=\"Helvetica\" ]\n"
 		"\tnode [ shape=\"record\" ]\n"
@@ -275,15 +279,15 @@ void exec_display(struct exec *e) {
 	);
 
 	/* display var */
-	printf("\t\"vars\" [ label=\"{Varlist");
+	fprintf(fd, "\t\"vars\" [ label=\"{Varlist");
 	list_for_each_entry(v, &e->vars, chain)
-		printf("|{%s|%d}", v->name, v->offset);
-	printf("}\" fillcolor=\"lightblue\" ]\n");
+		fprintf(fd, "|{%s|%d}", v->name, v->offset);
+	fprintf(fd, "}\" fillcolor=\"lightblue\" ]\n");
 
-	exec_display_recurse(e->program, 1);
+	exec_display_recurse(e->program, 1, fd, display_ptr);
 
-	printf("\t\"vars\" -> \"%p\"\n", e->program);
-	printf("}\n");
-	fflush(stdout);
+	fprintf(fd, "\t\"vars\" -> \"%p\"\n", e->program);
+	fprintf(fd, "}\n");
+	fclose(fd);
 }
 

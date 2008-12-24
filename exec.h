@@ -130,8 +130,10 @@ void exec_parse(struct exec *e, char *file);
 /**
  * Build dot graph for debugging program
  * @param e is template id
+ * @param file is output file
+ * @param display_ptr is option to watch pointer
  */
-void exec_display(struct exec *e);
+void exec_display(struct exec *e, char *file, int display_ptr);
 
 /**
  * Define function
