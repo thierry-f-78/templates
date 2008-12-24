@@ -11,7 +11,7 @@ LDFLAGS =
 CFLAGS = -Wall -g -O0
 YFLAGS = -v
 
-OBJS =  template.o syntax.o exec.o exec_run.o client.o
+OBJS =  template.o syntax.o exec.o exec_run.o exec_trace.o client.o
 FILES = template.h template.c syntax.c syntax.h
 
 #YACC_DEBUG = -t
