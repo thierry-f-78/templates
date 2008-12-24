@@ -74,6 +74,7 @@ struct exec_run *exec_new_run(struct exec *e) {
 	r->w = e->w;
 	r->e = e;
 	r->stack_ptr = 0;
+	r->retry = 0;
 	r->n = e->program;
 
 	return r;
@@ -485,5 +486,6 @@ void exec_display(struct exec *e) {
 
 	printf("\t\"vars\" -> \"%p\"\n", e->program);
 	printf("}\n");
+	fflush(stdout);
 }
 

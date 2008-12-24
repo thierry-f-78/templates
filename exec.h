@@ -51,8 +51,10 @@ extern struct exec *exec_template;
 #define ERRS(fmt, args...) \
 	fprintf(stderr, "[%s:%s:%d] " fmt "\n", __FILE__, __FUNCTION__, __LINE__, ##args);
 
-#define EXEC_MAX_ARGS 20
+/* maximiun argument can be given at function */
+#define MXARGS 20
 
+/* execute template stak */
 #define STACKSIZE 1024
 
 union exec_args {
@@ -104,10 +106,13 @@ struct exec_run {
 	struct exec *e;
 	struct exec_node *n;
 	union {
-		int integer;
+		int ent;
 		struct exec_node *n;
+		char *string;
+		void *ptr;
 	} stack[STACKSIZE];
 	int stack_ptr;
+	int retry;
 };
 
 /**
@@ -200,7 +205,12 @@ void exec_set_var(struct exec_run *r, struct exec_vars *v, void *val) {
 	((long *)r->vars)[v->offset] = (long)val;
 }
 
-void exec_run_now(struct exec_run *r);
+/**
+ * execute template
+ * @param r is run program id
+ * @return 0: ended, 1: need write
+ */
+int exec_run_now(struct exec_run *r);
 
 /* private */
 struct exec_node *exec_new(enum exec_type type, void *value, int line);

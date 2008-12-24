@@ -404,6 +404,7 @@ void exec_parse(struct exec *e, char *file) {
 	/* final and first node, set it into template */
 	n = exec_new(X_COLLEC, NULL, yylineno);
 	list_replace(stack_cur, &n->c);
+	n->line = 0;
 	e->program = n;
 
 	n->p = NULL;
