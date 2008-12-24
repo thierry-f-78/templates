@@ -65,7 +65,7 @@ union exec_args {
 	void *ptr;
 };
 
-typedef void *(*exec_function)(void *easy, union exec_args *args[], int nargs);
+typedef void *(*exec_function)(void *easy, union exec_args *args, int nargs);
 typedef ssize_t (*exec_write)(void *easy, const void *buf, size_t count);
 
 struct exec_vars {
