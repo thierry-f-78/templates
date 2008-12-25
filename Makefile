@@ -11,7 +11,7 @@ LDFLAGS =
 CFLAGS = -Wall -g -O0
 YFLAGS = -v
 
-OBJS =  template.o syntax.o exec.o exec_run.o exec_trace.o client.o
+OBJS =  template.o syntax.o exec.o exec_run.o exec_trace.o
 FILES = template.h template.c syntax.c syntax.h
 
 #YACC_DEBUG = -t
@@ -74,17 +74,17 @@ else
 
 endif
 
-all: $(FILES) xx 
+all: templates.a
 
-xx: $(OBJS)
-	@echo [LINK] $@
-	@$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+templates.a: $(OBJS)
+	@echo [  AR] $@
+	@$(AR) -rcv $@ $^
 
 syntax.o:   syntax.c template.h exec.h
 template.o: template.c syntax.h exec.h
 
 clean:
-	rm -f $(OBJS) $(FILES) xx
+	rm -f $(OBJS) $(FILES) template.a
 
 dot:
 	cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
