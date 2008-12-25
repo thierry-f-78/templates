@@ -100,6 +100,7 @@ int yyerror(char *str) {
 
 // comparaisons
 %token EQUAL
+%token STREQ
 %token DIFF
 %token LT
 %token GT
@@ -283,6 +284,12 @@ RValue:
 			$$ = $2;
 		}
 	| RValue EQUAL RValue
+		{
+			my_list_add_tail(&$1->b, &$2->c);
+			my_list_add_tail(&$3->b, &$2->c);
+			$$ = $2;
+		}
+	| RValue STREQ RValue
 		{
 			my_list_add_tail(&$1->b, &$2->c);
 			my_list_add_tail(&$3->b, &$2->c);

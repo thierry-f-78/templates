@@ -15,6 +15,7 @@ const char *exec_cmd2str[] = {
 	[X_DIV]      = "X_DIV (/)",
 	[X_MOD]      = "X_MOD (%)",
 	[X_EQUAL]    = "X_EQUAL (==)",
+	[X_STREQ]    = "X_STREQ (===)",
 	[X_DIFF]     = "X_DIFF (!=)",
 	[X_LT]       = "X_LT (\\<)",
 	[X_GT]       = "X_GT (\\>)",

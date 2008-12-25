@@ -70,6 +70,7 @@
 		case X_DIV: goto exec_X_DIV; \
 		case X_MOD: goto exec_X_MOD; \
 		case X_EQUAL: goto exec_X_EQUAL; \
+		case X_STREQ: goto exec_X_STREQ; \
 		case X_DIFF: goto exec_X_DIFF; \
 		case X_LT: goto exec_X_LT; \
 		case X_GT: goto exec_X_GT; \
@@ -111,7 +112,7 @@
 		switchline(26) switchline(27) switchline(28) switchline(29) switchline(30) \
 		switchline(31) switchline(32) switchline(33) switchline(34) switchline(35) \
 		switchline(36) switchline(37) switchline(38) switchline(39) switchline(40) \
-		switchline(41) switchline(42) \
+		switchline(41) switchline(42) switchline(43) switchline(44) \
 		default: \
 			fprintf(stderr, "[%s:%d] error in return code\n", __FILE__, __LINE__); \
 			exit(1); \
@@ -415,6 +416,30 @@ int exec_run_now(struct exec_run *r) {
 		exec_NODE(egt(-1).n, 15, egt(-1).ptr);
 
 		egt(-3).ent = egt(-2).ent == egt(-1).ent;
+		exec_free_stack(2);
+		exec_return();
+	} end_function
+
+
+/**********************************************************************
+* 
+* X_STREQ
+*
+**********************************************************************/
+	exec_function(X_STREQ) {
+		/* -3 : n
+		 * -2 : a et val(a)
+		 * -1 : b et val(b)
+		 */
+		exec_reserve_stack(2);
+
+		egt(-2).n = container_of(egt(-3).n->c.next, struct exec_node, b);
+		egt(-1).n = container_of(egt(-2).n->b.next, struct exec_node, b);
+
+		exec_NODE(egt(-2).n, 43, egt(-2).ptr);
+		exec_NODE(egt(-1).n, 44, egt(-1).ptr);
+
+		egt(-3).ent = strcmp(egt(-2).string, egt(-1).string);
 		exec_free_stack(2);
 		exec_return();
 	} end_function

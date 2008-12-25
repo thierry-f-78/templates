@@ -70,13 +70,14 @@ const char *n2str(int code) {
 	case 284: return "DIV";
 	case 285: return "MOD";
 	case 286: return "EQUAL";
-	case 287: return "DIFF";
-	case 288: return "LT";
-	case 289: return "GT";
-	case 290: return "LE";
-	case 291: return "GE";
-	case 292: return "AND";
-	case 293: return "OR";
+	case 287: return "STREQ";
+	case 288: return "DIFF";
+	case 289: return "LT";
+	case 290: return "GT";
+	case 291: return "LE";
+	case 292: return "GE";
+	case 293: return "AND";
+	case 294: return "OR";
 	default:
 		snprintf(str, 128, "Unknown code <%d>", code);
 		return str;
@@ -170,6 +171,7 @@ block           "%>"([^<]|<[^\%])"<%"
 "%"        {D; yylval = exec_new(X_MOD,    NULL, yylineno); RETURN(MOD); }
 
 "=="       {D; yylval = exec_new(X_EQUAL,  NULL, yylineno); RETURN(EQUAL); }
+"==="      {D; yylval = exec_new(X_STREQ,  NULL, yylineno); RETURN(STREQ); }
 "!="       {D; yylval = exec_new(X_DIFF,   NULL, yylineno); RETURN(DIFF); }
 "&&"       {D; yylval = exec_new(X_AND,    NULL, yylineno); RETURN(AND); }
 "||"       {D; yylval = exec_new(X_OR,     NULL, yylineno); RETURN(OR); }
