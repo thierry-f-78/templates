@@ -187,6 +187,10 @@ block           "%>"([^<]|<[^\%])"<%"
 		yylval = exec_new(X_STRING, val, yylineno);
 		RETURN(STR);
 	}
+"NULL"     {
+	yylval = exec_new(X_INTEGER, 0, yylineno);
+	RETURN(NUM);
+}
 ({num}|{hex}) {
 		void *val;
 		char *error;
