@@ -20,7 +20,6 @@
 #	define DEBUG(fmt, args...)
 #endif
 
-struct exec_node *base;
 int yyinputfd;
 struct list_head stack[STACK_SIZE];
 int stack_idx = 0;
