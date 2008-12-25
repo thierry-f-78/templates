@@ -7,8 +7,7 @@
 #include <unistd.h>
 
 #include "exec.h"
-
-#define YYSTYPE struct exec_node *
+#include "exec_internals.h"
 #include "template.h"
 
 /*

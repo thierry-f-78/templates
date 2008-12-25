@@ -8,8 +8,8 @@
 
 #include "syntax.h"
 #include "exec.h"
+#include "exec_internals.h"
 
-#define YYSTYPE struct exec_node *
 #define STACK_SIZE 150
 
 #ifdef DEBUGING
