@@ -1,5 +1,5 @@
-#ifndef __EXEC_H__
-#define __EXEC_H__
+#ifndef __TEMPLATES_H__
+#define __TEMPLATES_H__
 
 #include <stdlib.h>
 #include <stdio.h>

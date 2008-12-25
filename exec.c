@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "exec.h"
+#include "templates.h"
 
 struct exec *exec_template;
 

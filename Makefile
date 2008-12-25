@@ -80,8 +80,8 @@ templates.a: $(OBJS)
 	@echo [  AR] $@
 	@$(AR) -rcv $@ $^
 
-syntax.o:   syntax.c template.h exec.h
-template.o: template.c syntax.h exec.h
+syntax.o:   syntax.c template.h
+template.o: template.c syntax.h
 
 clean:
 	rm -f $(OBJS) $(FILES) template.a

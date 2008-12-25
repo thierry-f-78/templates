@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 
 #include "syntax.h"
-#include "exec.h"
+#include "templates.h"
 #include "exec_internals.h"
 
 #define STACK_SIZE 150

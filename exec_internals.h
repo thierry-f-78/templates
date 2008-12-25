@@ -1,7 +1,7 @@
 #ifndef __EXEC_INTERNALS_H__
 #define __EXEC_INTERNALS_H__
 
-#include "exec.h"
+#include "templates.h"
 
 #define YYSTYPE struct exec_node *
 
