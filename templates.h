@@ -213,7 +213,7 @@ void exec_set_var(struct exec_run *r, struct exec_vars *v, void *val) {
 /**
  * execute template
  * @param r is run program id
- * @return 0: ended, 1: need write
+ * @return 0: ended, 1: need write, -1: error
  */
 int exec_run_now(struct exec_run *r);
 

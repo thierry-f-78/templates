@@ -1,21 +1,11 @@
 #include "templates.h"
 
-//#define TRACEDEBUG
-
-#ifdef TRACEDEBUG
-#	define DEBUG(fmt, args...) \
-	       fprintf(stderr, "\e[33m[%s:%d] " fmt "\e[0m\n", \
-	               __FILE__, __LINE__, ##args);
-#else
-#	define DEBUG(fmt, args...)
-#endif
-
 #define exec_reserve_stack(number) \
 	do { \
 		r->stack_ptr += number; \
 		if (r->stack_ptr >= STACKSIZE) { \
-			fprintf(stderr, "stack overflow ( > STACKSIZE)\n"); \
-			exit(1); \
+			snprintf(r->e->error, ERROR_LEN, "stack overflow ( > STACKSIZE)"); \
+			return -1; \
 		} \
 	} while (0)
 
@@ -23,16 +13,16 @@
 	do { \
 		r->stack_ptr -= number; \
 		if (r->stack_ptr <= 0) { \
-			fprintf(stderr, "stack overflow ( > 0)\n"); \
-			exit(1); \
+			snprintf(r->e->error, ERROR_LEN, "stack overflow ( > 0)"); \
+			return -1; \
 		} \
 	} while (0)
 
 #define exec_push(val) \
 	do { \
 		if (r->stack_ptr == STACKSIZE) { \
-			fprintf(stderr, "stack overflow ( > STACKSIZE)\n"); \
-			exit(1); \
+			snprintf(r->e->error, ERROR_LEN, "stack overflow ( > STACKSIZE)"); \
+			return -1; \
 		} \
 		r->stack[r->stack_ptr].ptr = (void *)val; \
 		r->stack_ptr++; \
@@ -42,8 +32,8 @@
 	({ \
 		void *val; \
 		if (r->stack_ptr == 0) { \
-			fprintf(stderr, "stack overflow ( < 0)\n"); \
-			exit(1); \
+			snprintf(r->e->error, ERROR_LEN, "stack overflow ( < 0)"); \
+			return -1; \
 		} \
 		r->stack_ptr--; \
 		val = r->stack[r->stack_ptr].ptr; \
@@ -91,8 +81,9 @@
 		case X_BREAK:\
 		case X_CONT:\
 		default: \
-			fprintf(stderr, "[%s:%d] unknown function code\n", __FILE__, __LINE__); \
-			exit(1); \
+			snprintf(r->e->error, ERROR_LEN, \
+			         "[%s:%d] unknown function code", __FILE__, __LINE__); \
+			return -1; \
 		} \
 		exec_ ## id: \
 		varret = exec_pop(); \
@@ -114,8 +105,8 @@
 		switchline(36) switchline(37) switchline(38) switchline(39) switchline(40) \
 		switchline(41) switchline(42) switchline(43) switchline(44) \
 		default: \
-			fprintf(stderr, "[%s:%d] error in return code\n", __FILE__, __LINE__); \
-			exit(1); \
+			snprintf(r->e->error, ERROR_LEN, "[%s:%d] error in return code", __FILE__, __LINE__); \
+			return -1; \
 	}
 
 #define exec_function(xxx) \
@@ -124,8 +115,9 @@
 
 #define end_function \
 	while(0); \
-	fprintf(stderr, "this is normally never executed !\n"); \
-	exit(1);
+	snprintf(r->e->error, ERROR_LEN, \
+	         "[%s:%d] this is normally never executed !", __FILE__, __LINE__); \
+	return -1;
 
 int exec_run_now(struct exec_run *r) {
 	void *ret;
@@ -169,8 +161,6 @@ int exec_run_now(struct exec_run *r) {
 		/* execute children */
 		exec_NODE(egt(-4).n, 2, egt(-3).ptr);
 
-		DEBUG("%4d: display(%s);", (egt(-5).n)->line, egt(-3).string);
-
 		egt(-1).ent = strlen(egt(-3).string);
 		egt(-2).ent = egt(-1).ent;
 	
@@ -203,8 +193,6 @@ int exec_run_now(struct exec_run *r) {
 		 * -1: (int) len
 		 */
 		exec_reserve_stack(2);
-
-		DEBUG("%4d: print(%s);", egt(-3).n->line, egt(-3).n->v.string);
 
 		egt(-1).ent = strlen(egt(-3).n->v.string);
 		egt(-2).ent = egt(-1).ent;
@@ -632,9 +620,6 @@ int exec_run_now(struct exec_run *r) {
 		exec_NODE(egt(-1).n, 30, val);
 		r->vars[egt(-2).n->v.var->offset].ptr = val;
 
-		DEBUG("%4d: %s = %p;", egt(-3).n->line, egt(-2).n->v.var->name,
-		                       r->vars[egt(-2).n->v.var->offset].ptr);
-
 		egt(-3).ptr = r->vars[egt(-2).n->v.var->offset].ptr;
 		exec_free_stack(2);
 		exec_return();
@@ -669,8 +654,8 @@ int exec_run_now(struct exec_run *r) {
 
 			exec_NODE(egt(-(MXARGS+2)).n, 31, ret);
 			if (egt(-(MXARGS+1)).ent == MXARGS) {
-				fprintf(stderr, "function are more than 20 args");
-				exit(1);
+				snprintf(r->e->error, ERROR_LEN, "function are more than 20 args");
+				return -1;
 			}
 			egt(-1-egt(-(MXARGS+1)).ent).ptr = ret;
 			egt(-(MXARGS+1)).ent++;
