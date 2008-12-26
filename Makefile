@@ -80,9 +80,6 @@ libtemplates.a: $(OBJS)
 	@echo "[AR  ]" $@
 	@$(AR) -rcv $@ $^
 
-syntax.o:   syntax.c template.h
-template.o: template.c syntax.h
-
 templates: client.o libtemplates.a
 	@echo "[LD  ]" $@
 	@$(CC) -o $@ $^
@@ -92,4 +89,14 @@ clean:
 
 dot:
 	cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
+
+syntax.h:   syntax.l
+template.h: template.y
+syntax.c:   syntax.l templates.h exec_internals.h template.h
+template.c: template.y exec_internals.h syntax.h templates.h
+syntax.o:   syntax.c
+template.o: template.c
+exec.o:     exec.c templates.h exec_internals.h
+exec_run.o: exec_run.c templates.h
+exec_trace.o: exec_trace.c templates.h
 
