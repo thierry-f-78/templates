@@ -26,14 +26,13 @@ struct exec_run *exec_new_run(struct exec *e) {
 	/* memory for struct */
 	r = malloc(sizeof(*r));
 	if (r == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(*r), strerror(errno));
 		return NULL;
 	}
 
 	/* memory for vars */
 	r->vars = malloc(sizeof(r->vars) * e->nbvars);
 	if (r->vars == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(r->vars), strerror(errno));
+		free(r);
 		return NULL;
 	}
 

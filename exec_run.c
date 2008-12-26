@@ -6,7 +6,7 @@
 	do { \
 		r->stack_ptr += __number; \
 		if (r->stack_ptr >= STACKSIZE) { \
-			snprintf(r->e->error, ERROR_LEN, "stack overflow ( > STACKSIZE)"); \
+			snprintf(r->error, ERROR_LEN, "stack overflow ( > STACKSIZE)"); \
 			return -1; \
 		} \
 	} while (0)
@@ -16,7 +16,7 @@
 	do { \
 		r->stack_ptr -= __number; \
 		if (r->stack_ptr < 0) { \
-			snprintf(r->e->error, ERROR_LEN, "stack overflow ( < 0)"); \
+			snprintf(r->error, ERROR_LEN, "stack overflow ( < 0)"); \
 			return -1; \
 		} \
 	} while (0)
@@ -64,7 +64,7 @@
 		case X_BREAK: \
 		case X_CONT: \
 		default: \
-			snprintf(r->e->error, ERROR_LEN, \
+			snprintf(r->error, ERROR_LEN, \
 			         "[%s:%d] unknown function code <%d>", \
 			         __FILE__, __LINE__, node->type); \
 			return -1; \
@@ -99,7 +99,7 @@
 		switchline(40) \
 		switchline(41) \
 		switchline(42) \
-			snprintf(r->e->error, ERROR_LEN, "[%s:%d] error in return code", __FILE__, __LINE__); \
+			snprintf(r->error, ERROR_LEN, "[%s:%d] error in return code", __FILE__, __LINE__); \
 			return -1; \
 	}
 
@@ -111,7 +111,7 @@
 /* this end pseudo function */
 #define end_function \
 	while(0); \
-	snprintf(r->e->error, ERROR_LEN, \
+	snprintf(r->error, ERROR_LEN, \
 	         "[%s:%d] this is normally never executed !", __FILE__, __LINE__); \
 	return -1;
 
@@ -326,7 +326,7 @@ int exec_run_now(struct exec_run *r) {
 		case X_BREAK:
 		case X_CONT:
 		default:
-			snprintf(r->e->error, ERROR_LEN, 
+			snprintf(r->error, ERROR_LEN, 
 			         "[%s:%d] unknown function code", __FILE__, __LINE__);
 			return -1;
 		}
@@ -388,7 +388,7 @@ int exec_run_now(struct exec_run *r) {
 
 			exec_NODE(egt(-(MXARGS+2)).n, 31, ret);
 			if (egt(-(MXARGS+1)).ent == MXARGS) {
-				snprintf(r->e->error, ERROR_LEN, "function are more than 20 args");
+				snprintf(r->error, ERROR_LEN, "function are more than 20 args");
 				return -1;
 			}
 			egt(-1-egt(-(MXARGS+1)).ent).ptr = ret;
