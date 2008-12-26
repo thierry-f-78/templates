@@ -1,3 +1,7 @@
+%pure-parser
+%parse-param { struct yyargs_t *args }
+%lex-param { yyscan_t args_scanner }
+
 %{
 
 #include <stdlib.h>
@@ -5,9 +9,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#define YYPARSE_PARAM args
-#define YYLEX_PARAM &yylval, ((struct yyargs_t *)args)->scanner
 
 #include "exec_internals.h"
 #include "syntax.h"
@@ -22,27 +23,27 @@
 #	define DEBUG(fmt, args...)
 #endif
 
-#define args_cur ((struct yyargs_t *)args)
+#define args_scanner args->scanner
 
 #define stack_cur \
-	(&(args_cur->stack[args_cur->stack_idx]))
+	(&(args->stack[args->stack_idx]))
 
 #define stack_push() \
 	do { \
-		args_cur->stack_idx++; \
-		DEBUG("stack_push: %d", args_cur->stack_idx); \
-		if (args_cur->stack_idx == STACK_SIZE) { \
+		args->stack_idx++; \
+		DEBUG("stack_push: %d", args->stack_idx); \
+		if (args->stack_idx == STACK_SIZE) { \
 			fprintf(stderr, "stack full\n"); \
 			exit(1); \
 		} \
-		INIT_LIST_HEAD(&(args_cur->stack[args_cur->stack_idx])); \
+		INIT_LIST_HEAD(stack_cur); \
 	} while(0);
 
 #define stack_pop() \
 	do { \
-		args_cur->stack_idx--; \
-		DEBUG("stack_pop: %d", args_cur->stack_idx); \
-		if (args_cur->stack_idx == -1) { \
+		args->stack_idx--; \
+		DEBUG("stack_pop: %d", args->stack_idx); \
+		if (args->stack_idx == -1) { \
 			ERRS("stack_pop: negative index"); \
 			exit(1); \
 		} \
@@ -52,7 +53,11 @@
 	DEBUG("my_list_add_tail(%p, %p)", new, head); \
 	list_add_tail(new, head);
 
-int yyerror(char *str) { return 0; }
+int yyerror(struct yyargs_t *args, char *str) { 
+	snprintf(args->e->error, ERROR_LEN, "line %d: %s near '%s'",
+	         yyget_lineno(args->scanner), str, yyget_text(args->scanner)); 
+	return 0; 
+}
 
 %}
 
@@ -419,14 +424,16 @@ int exec_parse(struct exec *e, char *file) {
 
 	ret = yyparse(args);
 
+	yylex_destroy(scanner);
 	fclose(fd);
 
-	if (ret != 0) {
-		if (e->error[0] == '\0')
-			snprintf(e->error, ERROR_LEN, "line %d: syntax error near '%s'",
-			         yyget_lineno(scanner), yyget_text(scanner)); 
+	/* syntax error */
+	if (ret == 1)
+		return -1;
 
-			yylex_destroy(scanner);
+	/* memory hexausted */
+	else if (ret == 2) {
+		snprintf(e->error, ERROR_LEN, "parsing failed due to memory exhaustion.");
 		return -1;
 	}
 
@@ -438,8 +445,6 @@ int exec_parse(struct exec *e, char *file) {
 
 	n->p = NULL;
 	exec_set_parents(n);
-
-	yylex_destroy(scanner);
 
 	return 0;
 }
