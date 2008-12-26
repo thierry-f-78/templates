@@ -18,41 +18,6 @@ FILES = template.h template.c syntax.c syntax.h
 #CPPFLAGS = -DDEBUGING -DYYDEBUG
 CPPFLAGS =
 
-ifneq ($(V),1)
-
-%.c: %.l
-	@echo "[LEX ] $@"
-	@$(RM) $@
-	@$(LEX.l) $< > $@
-	@sed -i 's/"<stdout>"/"$@"/g' $@
-
-%.h: %.l
-	@echo "[LEX ] $@"
-	@$(RM) $@
-	@$(LEX.l) --header-file=$@ $< >/dev/null
-
-%.c: %.y
-	@echo "[YACC] $@"
-	@$(YACC.y) $<
-	@mv -f y.tab.c $@
-	@sed -i 's/"y.tab.c"/"$@"/g' $@
-
-%.h: %.y
-	@echo "[YACC] $@"
-	@$(YACC.y) -d $<
-	@rm y.tab.c
-	@mv y.tab.h $@
-
-%.o: %.c
-	@echo "[CC  ] $@"
-	@$(COMPILE.c) $(OUTPUT_OPTION) $<
-
-%: %.o
-	@echo [LINK] $@
-	@$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
-
-else
-
 %.c: %.y
 	$(YACC.y) $<
 	mv -f y.tab.c $@
@@ -72,17 +37,13 @@ else
 	$(RM) $@
 	$(LEX.l) --header-file=$@ $< >/dev/null
 
-endif
-
 all: libtemplates.a templates
 
 libtemplates.a: $(OBJS)
-	@echo "[AR  ]" $@
-	@$(AR) -rcv $@ $^
+	$(AR) -rcv $@ $^
 
 templates: client.o libtemplates.a
-	@echo "[LD  ]" $@
-	@$(CC) -o $@ $^
+	$(CC) -o $@ $^
 
 clean:
 	rm -f $(OBJS) $(FILES) libtemplates.a client.o
@@ -97,6 +58,6 @@ template.c: template.y exec_internals.h syntax.h templates.h
 syntax.o:   syntax.c
 template.o: template.c
 exec.o:     exec.c templates.h exec_internals.h
-exec_run.o: exec_run.c templates.h
+exec_run.o: exec_run.c templates.h exec_internals.h
 exec_trace.o: exec_trace.c templates.h
 
