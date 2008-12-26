@@ -1,9 +1,10 @@
+#include "exec_internals.h"
 #include "templates.h"
 
 /* reserve words in stack */
-#define exec_reserve_stack(number) \
+#define exec_reserve_stack(__number) \
 	do { \
-		r->stack_ptr += number; \
+		r->stack_ptr += __number; \
 		if (r->stack_ptr >= STACKSIZE) { \
 			snprintf(r->e->error, ERROR_LEN, "stack overflow ( > STACKSIZE)"); \
 			return -1; \
@@ -11,30 +12,28 @@
 	} while (0)
 
 /* restore words into stack */
-#define exec_free_stack(number) \
+#define exec_free_stack(__number) \
 	do { \
-		r->stack_ptr -= number; \
-		if (r->stack_ptr <= 0) { \
+		r->stack_ptr -= __number; \
+		if (r->stack_ptr < 0) { \
 			snprintf(r->e->error, ERROR_LEN, "stack overflow ( < 0)"); \
 			return -1; \
 		} \
 	} while (0)
 
 /* relative acces into stack */
-#define egt(relindex) \
-	r->stack[r->stack_ptr + relindex]
+#define egt(__relindex) \
+	r->stack[r->stack_ptr + __relindex]
 
 /* execute function */
-#define exec_NODE(n, id, ret) \
+#define exec_NODE(__node, __id, __ret) \
 	do { \
-		int nid = id; \
-		struct exec_node *node = n; \
-		void *varret; \
-		\
+		struct exec_node *node = __node; \
+		void *____ret; \
 		exec_reserve_stack(2); \
-		egt(-2).ent = nid;
-		egt(-1).n = node;
-		switch ((node)->type) { \
+		egt(-2).ent = __id; \
+		egt(-1).n = node; \
+		switch (node->type) { \
 		case X_NULL: goto exec_X_NULL; \
 		case X_COLLEC: goto exec_X_COLLEC; \
 		case X_PRINT: goto exec_X_PRINT; \
@@ -62,16 +61,18 @@
 		case X_FOR: goto exec_X_FOR; \
 		case X_WHILE: goto exec_X_WHILE; \
 		case X_IF: goto exec_X_IF; \
-		case X_BREAK:\
-		case X_CONT:\
+		case X_BREAK: \
+		case X_CONT: \
 		default: \
 			snprintf(r->e->error, ERROR_LEN, \
-			         "[%s:%d] unknown function code", __FILE__, __LINE__); \
+			         "[%s:%d] unknown function code <%d>", \
+			         __FILE__, __LINE__, node->type); \
 			return -1; \
 		} \
-		exec_ ## id: \
-		ret = egt(-1).ptr;
-		exec_free_stack(2);
+		exec_ ## __id: \
+		____ret = egt(-1).ptr; \
+		exec_free_stack(2); \
+		__ret = ____ret; \
 	} while(0)
 
 /* return to caller

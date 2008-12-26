@@ -13,6 +13,8 @@ struct yyargs_t {
 	void *scanner;
 };
 
+extern const char *exec_cmd2str[];
+
 struct exec_node *exec_new(struct exec *e, enum exec_type type, void *value, int line);
 char *exec_blockdup(struct exec *e, char *str);
 char *exec_strdup(struct exec *e, char *str);
