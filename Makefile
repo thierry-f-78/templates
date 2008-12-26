@@ -74,9 +74,9 @@ else
 
 endif
 
-all: templates.a
+all: libtemplates.a
 
-templates.a: $(OBJS)
+libtemplates.a: $(OBJS)
 	@echo [  AR] $@
 	@$(AR) -rcv $@ $^
 
@@ -84,7 +84,7 @@ syntax.o:   syntax.c template.h
 template.o: template.c syntax.h
 
 clean:
-	rm -f $(OBJS) $(FILES) template.a
+	rm -f $(OBJS) $(FILES) libtemplates.a
 
 dot:
 	cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
