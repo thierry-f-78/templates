@@ -18,28 +18,6 @@
 		} \
 	} while (0)
 
-#define exec_push(val) \
-	do { \
-		if (r->stack_ptr == STACKSIZE) { \
-			snprintf(r->e->error, ERROR_LEN, "stack overflow ( > STACKSIZE)"); \
-			return -1; \
-		} \
-		r->stack[r->stack_ptr].ptr = (void *)val; \
-		r->stack_ptr++; \
-	} while (0)
-
-#define exec_pop() \
-	({ \
-		void *val; \
-		if (r->stack_ptr == 0) { \
-			snprintf(r->e->error, ERROR_LEN, "stack overflow ( < 0)"); \
-			return -1; \
-		} \
-		r->stack_ptr--; \
-		val = r->stack[r->stack_ptr].ptr; \
-		val; \
-	})
-
 #define egt(relindex) \
 	r->stack[r->stack_ptr + relindex]
 
@@ -48,8 +26,10 @@
 		int nid = id; \
 		struct exec_node *node = n; \
 		void *varret; \
-		exec_push(nid); \
-		exec_push(node); \
+		\
+		exec_reserve_stack(2); \
+		egt(-2).ent = nid;
+		egt(-1).n = node;
 		switch ((node)->type) { \
 		case X_NULL: goto exec_X_NULL; \
 		case X_COLLEC: goto exec_X_COLLEC; \
@@ -86,9 +66,8 @@
 			return -1; \
 		} \
 		exec_ ## id: \
-		varret = exec_pop(); \
-		exec_pop(); /* depile l'id de retour */ \
-		ret = varret; \
+		ret = egt(-1).ptr;
+		exec_free_stack(2);
 	} while(0)
 
 #define switchline(index) case index: goto exec_ ## index;
