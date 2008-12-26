@@ -383,8 +383,6 @@ int exec_parse(struct exec *e, char *file) {
 	yyscan_t scanner;
 	FILE *fd;
 
-	exec_template = e;
-
 	/* open, parse file and close */
 	fd = fopen(file, "r");
 	if (fd == NULL) {

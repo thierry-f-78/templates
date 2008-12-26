@@ -47,7 +47,6 @@ enum exec_type {
 };
 
 extern const char *exec_cmd2str[];
-extern struct exec *exec_template;
 
 #define ERRS(fmt, args...) \
 	fprintf(stderr, "[%s:%s:%d] " fmt "\n", __FILE__, __FUNCTION__, __LINE__, ##args);

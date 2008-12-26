@@ -204,14 +204,16 @@ block           "%>"([^<]|<[^\%])"<%"
 {var}      {
 		void *val;
 		D;
-		val = exec_var(yytext);
+		struct yyargs_t *arg = yyget_extra(yyscanner);
+		val = exec_var(arg->e, yytext);
 		*yylval = exec_new(X_VAR, val, yylineno);
 		RETURN(VAR);
 	}
 {function} {
 		void *val;
 		D;
-		val = exec_func(yytext);
+		struct yyargs_t *arg = yyget_extra(yyscanner);
+		val = exec_func(arg->e, yytext);
 		if (val == NULL) {
 			seterror("line %d: '%s' function not found", yylineno, yytext);
 			return 0;

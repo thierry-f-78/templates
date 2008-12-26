@@ -4,8 +4,7 @@
 #include <string.h>
 
 #include "templates.h"
-
-struct exec *exec_template;
+#include "exec_internals.h"
 
 struct exec *exec_new_template(void) {
 	struct exec *e;
@@ -104,15 +103,15 @@ char *exec_strdup(char *str) {
 	return out;
 }
 
-void *exec_var(char *str) {
+void *exec_var(struct exec *e, char *str) {
 	struct exec_vars *v;
 
 	/* search var */
-	list_for_each_entry(v, &exec_template->vars, chain) {
+	list_for_each_entry(v, &e->vars, chain) {
 		if (strcmp(v->name, str)==0)
 			break;
 	}
-	if (&v->chain != &exec_template->vars)
+	if (&v->chain != &e->vars)
 		return v;
 
 	/* memory for var */
@@ -123,8 +122,8 @@ void *exec_var(char *str) {
 	}
 
 	/* set var offset */
-	v->offset = exec_template->nbvars;
-	exec_template->nbvars++;
+	v->offset = e->nbvars;
+	e->nbvars++;
 
 	/* copy var name */
 	v->name = strdup(str);
@@ -134,7 +133,7 @@ void *exec_var(char *str) {
 	}
 
 	/* chain */
-	list_add_tail(&v->chain, &exec_template->vars);
+	list_add_tail(&v->chain, &e->vars);
 
 	return v;
 }
@@ -185,15 +184,15 @@ void exec_declare_func(struct exec *e, char *name, exec_function fc) {
 	list_add_tail(&f->chain, &e->funcs);
 }
 
-void *exec_func(char *str) {
+void *exec_func(struct exec *e, char *str) {
 	struct exec_funcs *f;
 
 	/* check if the function exists */
-	list_for_each_entry(f, &exec_template->funcs, chain) {
+	list_for_each_entry(f, &e->funcs, chain) {
 		if (strcmp(f->name, str)==0)
 			break;
 	}
-	if (&f->chain != &exec_template->funcs)
+	if (&f->chain != &e->funcs)
 		return f;
 
 	return NULL;
