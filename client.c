@@ -24,6 +24,10 @@ int main(int argc, char *argv[]) {
 	/* init side */
 
 	e = exec_new_template();
+	if (e == NULL) {
+		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		exit(1);
+	}
 
 	exec_set_write(e, testwrite);
 	exec_set_easy(e, NULL);
@@ -34,14 +38,33 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	exec_display(e, "a", 0);
+	ret = exec_display(e, "a", 0);
+	if (ret != 0) {
+		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		exit(1);
+	}
 
 	/* run side */  
 
 	gettimeofday(&tv1, NULL);
 
 	r = exec_new_run(e);
-	while (exec_run_now(r) != 0);
+	if (r == NULL) {
+		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		exit(1);
+	}
+
+	while (1) {
+		ret = exec_run_now(r);
+		if (ret == 1)
+			continue;
+		else if (ret == 0)
+			break;
+		else {
+			fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+			exit(1);
+		}
+	}
 
 	gettimeofday(&tv2, NULL);
 
