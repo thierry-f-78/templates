@@ -181,7 +181,9 @@ Block:
 	{ stack_push(); } InputElement
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL, -1);
+			n = exec_new(args->e, X_COLLEC, NULL, -1);
+			if (n == NULL)
+				YYABORT;
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			$$ = n;
@@ -189,7 +191,9 @@ Block:
 	| OPENBLOCK { stack_push(); } Input CLOSEBLOCK
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL, -1);
+			n = exec_new(args->e, X_COLLEC, NULL, -1);
+			if (n == NULL)
+				YYABORT;
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			$$ = n;
@@ -218,7 +222,9 @@ SwitchBlock:
 	SwitchKey { stack_push(); } Input
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL, -1);
+			n = exec_new(args->e, X_COLLEC, NULL, -1);
+			if (n == NULL)
+				YYABORT;
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			list_add_tail(&n->b, stack_cur);
@@ -230,7 +236,9 @@ SwitchKey:
 	| DEFAULT COLON
 		{
 			struct exec_node *n;
-			n = exec_new(X_NULL, NULL, -1);
+			n = exec_new(args->e, X_NULL, NULL, -1);
+			if (n == NULL)
+				YYABORT;
 			list_add_tail(&n->b, stack_cur);
 		}
 
@@ -395,8 +403,8 @@ int exec_parse(struct exec *e, char *file) {
 	/* open file */
 	fd = fopen(file, "r");
 	if (fd == NULL) {
-		ERRS("fopen(%s): %s\n", file, strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "fopen(%s): %s\n", file, strerror(errno));
+		return -1;
 	}
 
 	/* init flex context */
@@ -429,7 +437,9 @@ int exec_parse(struct exec *e, char *file) {
 	}
 
 	/* attach tree to the first node, set it into struct exec*/
-	n = exec_new(X_COLLEC, NULL, 0);
+	n = exec_new(e, X_COLLEC, NULL, 0);
+	if (n == NULL)
+		return -1;
 	n->p = NULL;
 	list_replace(&(yyargs.stack[yyargs.stack_idx]), &n->c);
 	e->program = n;

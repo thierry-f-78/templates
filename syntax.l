@@ -20,12 +20,24 @@
 #include "exec_internals.h"
 #include "template.h"
 
+/* this return abort yyparse */
+#define YYPARSE_ABORT 1
+
 /* this macro set error message into struct exec */
 #define seterror(fmt, args...) \
 	do { \
 		struct yyargs_t *arg = yyget_extra(yyscanner); \
 		snprintf(arg->e->error, ERROR_LEN, fmt, ##args); \
-		return 1; \
+		return YYPARSE_ABORT; \
+	} while(0);
+
+/* this create nex node, check return value and return error if needed */
+#define my_exec_new(action, argument) \
+	do { \
+		struct yyargs_t *arg = yyget_extra(yyscanner); \
+		*yylval = exec_new(arg->e, action, argument, yylineno); \
+		if (*yylval == NULL) \
+			return YYPARSE_ABORT; \
 	} while(0);
 
 %}
@@ -41,7 +53,11 @@ block           "%>"([^<]|<[^\%])"<%"
 %%
 
 "%>"([^<]|<[^%])*"<%" {
-		*yylval = exec_new(X_PRINT, exec_blockdup(yytext), yylineno);
+		struct yyargs_t *extra = yyget_extra(yyscanner);
+		char *blockdup = exec_blockdup(extra->e, yytext);
+		if (blockdup == NULL)
+			return YYPARSE_ABORT;
+		my_exec_new(X_PRINT, blockdup);
 		return PRINT; 
 	}
 
@@ -55,72 +71,77 @@ block           "%>"([^<]|<[^\%])"<%"
 ";"        { return SEP; }
 ":"        { return COLON; }
 
-"for"      { *yylval = exec_new(X_FOR,    NULL, yylineno); return FOR; }
-"while"    { *yylval = exec_new(X_WHILE,  NULL, yylineno); return WHILE; }
-"if"       { *yylval = exec_new(X_IF,     NULL, yylineno); return IF; }
+"for"      { my_exec_new(X_FOR, NULL); return FOR; }
+"while"    { my_exec_new(X_WHILE, NULL); return WHILE; }
+"if"       { my_exec_new(X_IF, NULL); return IF; }
 "else"     { return ELSE; }
-"break"    { *yylval = exec_new(X_BREAK,  NULL, yylineno); return BREAK; }
-"continue" { *yylval = exec_new(X_CONT,   NULL, yylineno); return CONT; }
-"switch"   { *yylval = exec_new(X_SWITCH, NULL, yylineno); return SWITCH; }
+"break"    { my_exec_new(X_BREAK, NULL); return BREAK; }
+"continue" { my_exec_new(X_CONT, NULL); return CONT; }
+"switch"   { my_exec_new(X_SWITCH, NULL); return SWITCH; }
 "case"     { return CASE; }
 "default"  { return DEFAULT; }
 
-"="        { *yylval = exec_new(X_ASSIGN, NULL, yylineno); return ASSIGN; }
-"+"        { *yylval = exec_new(X_ADD,    NULL, yylineno); return ADD; }
-"-"        { *yylval = exec_new(X_SUB,    NULL, yylineno); return SUB; }
-"*"        { *yylval = exec_new(X_MUL,    NULL, yylineno); return MUL; }
-"/"        { *yylval = exec_new(X_DIV,    NULL, yylineno); return DIV; }
-"%"        { *yylval = exec_new(X_MOD,    NULL, yylineno); return MOD; }
+"="        { my_exec_new(X_ASSIGN, NULL); return ASSIGN; }
+"+"        { my_exec_new(X_ADD, NULL); return ADD; }
+"-"        { my_exec_new(X_SUB, NULL); return SUB; }
+"*"        { my_exec_new(X_MUL, NULL); return MUL; }
+"/"        { my_exec_new(X_DIV, NULL); return DIV; }
+"%"        { my_exec_new(X_MOD, NULL); return MOD; }
 
-"=="       { *yylval = exec_new(X_EQUAL,  NULL, yylineno); return EQUAL; }
-"==="      { *yylval = exec_new(X_STREQ,  NULL, yylineno); return STREQ; }
-"!="       { *yylval = exec_new(X_DIFF,   NULL, yylineno); return DIFF; }
-"&&"       { *yylval = exec_new(X_AND,    NULL, yylineno); return AND; }
-"||"       { *yylval = exec_new(X_OR,     NULL, yylineno); return OR; }
-"<"        { *yylval = exec_new(X_LT,     NULL, yylineno); return LT; }
-">"        { *yylval = exec_new(X_GT,     NULL, yylineno); return GT; }
-">="       { *yylval = exec_new(X_GE,     NULL, yylineno); return GE; }
-"<="       { *yylval = exec_new(X_LE,     NULL, yylineno); return LE; }
+"=="       { my_exec_new(X_EQUAL, NULL); return EQUAL; }
+"==="      { my_exec_new(X_STREQ, NULL); return STREQ; }
+"!="       { my_exec_new(X_DIFF, NULL); return DIFF; }
+"&&"       { my_exec_new(X_AND, NULL); return AND; }
+"||"       { my_exec_new(X_OR, NULL); return OR; }
+"<"        { my_exec_new(X_LT, NULL); return LT; }
+">"        { my_exec_new(X_GT, NULL); return GT; }
+">="       { my_exec_new(X_GE, NULL); return GE; }
+"<="       { my_exec_new(X_LE, NULL); return LE; }
 
-"display"  { *yylval = exec_new(X_DISPLAY,NULL, yylineno); return DISPLAY; }
+"display"  { my_exec_new(X_DISPLAY, NULL); return DISPLAY; }
 
 {str}      {
-		void *val;
-		val = exec_strdup(yytext);
-		*yylval = exec_new(X_STRING, val, yylineno);
+		char *val;
+		struct yyargs_t *extra = yyget_extra(yyscanner);
+		val = exec_strdup(extra->e, yytext);
+		if (val == NULL)
+			return YYPARSE_ABORT;
+		my_exec_new(X_STRING, val);
 		return STR;
 	}
 "NULL"     {
-		*yylval = exec_new(X_INTEGER, 0, yylineno);
+		my_exec_new(X_INTEGER, 0);
 		return NUM;
 	}
 ({num}|{hex}) {
-		void *val;
+		long val;
 		char *error;
-		val = (void *)strtol(yytext, &error, 0);
+		val = strtol(yytext, &error, 0);
 		if (*error != '\0') {
 			seterror("line %d: '%s' not a number", yylineno, yytext);
-			return 0;
+			return YYPARSE_ABORT;
 		}
-		*yylval = exec_new(X_INTEGER, val, yylineno);
+		my_exec_new(X_INTEGER, (void *)val);
 		return NUM;
 	}
 {var}      {
-		void *val;
+		struct exec_vars *val;
 		struct yyargs_t *arg = yyget_extra(yyscanner);
 		val = exec_var(arg->e, yytext);
-		*yylval = exec_new(X_VAR, val, yylineno);
+		if (val == NULL)
+			return YYPARSE_ABORT;
+		my_exec_new(X_VAR, val);
 		return VAR;
 	}
 {function} {
-		void *val;
+		struct exec_funcs *val;
 		struct yyargs_t *arg = yyget_extra(yyscanner);
 		val = exec_func(arg->e, yytext);
 		if (val == NULL) {
 			seterror("line %d: '%s' function not found", yylineno, yytext);
-			return 0;
+			return YYPARSE_ABORT;
 		}
-		*yylval = exec_new(X_FUNCTION, val, yylineno);
+		my_exec_new(X_FUNCTION, val);
 		return FUNCTION;
 	}
 
@@ -128,7 +149,7 @@ block           "%>"([^<]|<[^\%])"<%"
 "\n"       { }
 .          {
 		seterror("line %d: '%s' unexpected character", yylineno, yytext);
-		return 0;
+		return YYPARSE_ABORT;
 	}
 
 %%

@@ -11,8 +11,8 @@ struct exec *exec_new_template(void) {
 
 	e = malloc(sizeof(*e));
 	if (e == NULL) {
-		ERRS("malloc(%d): %s", sizeof(*e), strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(*e), strerror(errno));
+		return NULL;
 	}
 	e->nbvars = 0;
 	INIT_LIST_HEAD(&e->vars);
@@ -26,15 +26,15 @@ struct exec_run *exec_new_run(struct exec *e) {
 	/* memory for struct */
 	r = malloc(sizeof(*r));
 	if (r == NULL) {
-		ERRS("malloc(%d): %s", sizeof(*r), strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(*r), strerror(errno));
+		return NULL;
 	}
 
 	/* memory for vars */
 	r->vars = malloc(sizeof(r->vars) * e->nbvars);
 	if (r->vars == NULL) {
-		ERRS("malloc(%d): %s", sizeof(r->vars), strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(r->vars), strerror(errno));
+		return NULL;
 	}
 
 	/* copy default args and init run */
@@ -48,13 +48,13 @@ struct exec_run *exec_new_run(struct exec *e) {
 	return r;
 }
 
-struct exec_node *exec_new(enum exec_type type, void *value, int line) {
+struct exec_node *exec_new(struct exec *e, enum exec_type type, void *value, int line) {
 	struct exec_node *n;
 
 	n = malloc(sizeof *n);
 	if (n == NULL) {
-		ERRS("malloc(%d): %s\n", sizeof *n, strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s\n", sizeof *n, strerror(errno));
+		return NULL;
 	}
 
 	n->type = type;
@@ -65,7 +65,7 @@ struct exec_node *exec_new(enum exec_type type, void *value, int line) {
 	return n;
 }
 
-char *exec_blockdup(char *str) {
+char *exec_blockdup(struct exec *e, char *str) {
 	char *out;
 	int len;
 
@@ -74,8 +74,8 @@ char *exec_blockdup(char *str) {
 
 	out = malloc(len + 1);
 	if (out == NULL) {
-		ERRS("malloc(%d): %s\n", len + 1, strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s\n", len + 1, strerror(errno));
+		return NULL;
 	}
 
 	memcpy(out, str, len);
@@ -84,7 +84,7 @@ char *exec_blockdup(char *str) {
 	return out;
 }
 
-char *exec_strdup(char *str) {
+char *exec_strdup(struct exec *e, char *str) {
 	char *out;
 	int len;
 
@@ -93,8 +93,8 @@ char *exec_strdup(char *str) {
 
 	out = malloc(len + 1);
 	if (out == NULL) {
-		ERRS("malloc(%d): %s\n", len + 1, strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s\n", len + 1, strerror(errno));
+		return NULL;
 	}
 
 	memcpy(out, str, len);
@@ -103,7 +103,7 @@ char *exec_strdup(char *str) {
 	return out;
 }
 
-void *exec_var(struct exec *e, char *str) {
+struct exec_vars *exec_var(struct exec *e, char *str) {
 	struct exec_vars *v;
 
 	/* search var */
@@ -117,8 +117,8 @@ void *exec_var(struct exec *e, char *str) {
 	/* memory for var */
 	v = malloc(sizeof(*v));
 	if (v == NULL) {
-		ERRS("malloc(%d): %s", sizeof(*v), strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(*v), strerror(errno));
+		return NULL;
 	}
 
 	/* set var offset */
@@ -128,8 +128,8 @@ void *exec_var(struct exec *e, char *str) {
 	/* copy var name */
 	v->name = strdup(str);
 	if (v->name == NULL) {
-		ERRS("strdup(\"%s\"): %s", str, strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "strdup(\"%s\"): %s", str, strerror(errno));
+		return NULL;
 	}
 
 	/* chain */
@@ -152,7 +152,7 @@ struct exec_vars *exec_get_var(struct exec *e, char *str) {
 	return NULL;
 }
 
-void exec_declare_func(struct exec *e, char *name, exec_function fc) {
+int exec_declare_func(struct exec *e, char *name, exec_function fc) {
 	struct exec_funcs *f;
 
 	/* check if the function exists */
@@ -161,13 +161,13 @@ void exec_declare_func(struct exec *e, char *name, exec_function fc) {
 			break;
 	}
 	if (&f->chain != &e->funcs)
-		return; /* already exists */
+		return -2; /* already exists */
 	
 	/* memory for func */
 	f = malloc(sizeof(*f));
 	if (f == NULL) {
-		ERRS("malloc(%d): %s", sizeof(*f), strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(*f), strerror(errno));
+		return -1;
 	}
 
 	/* copy function ptr */
@@ -176,15 +176,16 @@ void exec_declare_func(struct exec *e, char *name, exec_function fc) {
 	/* copy var name */
 	f->name = strdup(name);
 	if (f->name == NULL) {
-		ERRS("strdup(\"%s\"): %s", name, strerror(errno));
-		exit(1);
+		snprintf(e->error, ERROR_LEN, "strdup(\"%s\"): %s", name, strerror(errno));
+		return -1;
 	}
 
 	/* chain */
 	list_add_tail(&f->chain, &e->funcs);
+	return 0;
 }
 
-void *exec_func(struct exec *e, char *str) {
+struct exec_funcs *exec_func(struct exec *e, char *str) {
 	struct exec_funcs *f;
 
 	/* check if the function exists */

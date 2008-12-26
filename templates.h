@@ -46,11 +46,6 @@ enum exec_type {
 	X_CONT
 };
 
-extern const char *exec_cmd2str[];
-
-#define ERRS(fmt, args...) \
-	fprintf(stderr, "[%s:%s:%d] " fmt "\n", __FILE__, __FUNCTION__, __LINE__, ##args);
-
 /* maximiun argument can be given at function */
 #define MXARGS 20
 
@@ -137,16 +132,19 @@ int exec_parse(struct exec *e, char *file);
  * @param e is template id
  * @param file is output file
  * @param display_ptr is option to watch pointer
+ * @return 0 if ok, else -1
  */
-void exec_display(struct exec *e, char *file, int display_ptr);
+int exec_display(struct exec *e, char *file, int display_ptr);
 
 /**
  * Define function
  * @param e is template id
  * @param name is the neme of the function in template
  * @param f is function ptr
+ * @return 0 if OK, -1 if an error is occurred, -2 if
+ *         the function is already declared
  */
-void exec_declare_func(struct exec *e, char *name, exec_function f);
+int exec_declare_func(struct exec *e, char *name, exec_function f);
 
 /**
  * set default easy argument

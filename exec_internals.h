@@ -13,11 +13,11 @@ struct yyargs_t {
 	void *scanner;
 };
 
-struct exec_node *exec_new(enum exec_type type, void *value, int line);
-char *exec_blockdup(char *str);
-char *exec_strdup(char *str);
-void *exec_var(struct exec *e, char *str);
-void *exec_func(struct exec *e, char *str);
+struct exec_node *exec_new(struct exec *e, enum exec_type type, void *value, int line);
+char *exec_blockdup(struct exec *e, char *str);
+char *exec_strdup(struct exec *e, char *str);
+struct exec_vars *exec_var(struct exec *e, char *str);
+struct exec_funcs *exec_func(struct exec *e, char *str);
 void exec_set_parents(struct exec_node *n);
 
 #endif
