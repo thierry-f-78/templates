@@ -77,14 +77,14 @@ endif
 all: libtemplates.a templates
 
 libtemplates.a: $(OBJS)
-	@echo [AR  ] $@
+	@echo "[AR  ]" $@
 	@$(AR) -rcv $@ $^
 
 syntax.o:   syntax.c template.h
 template.o: template.c syntax.h
 
 templates: client.o libtemplates.a
-	@echo [LD  ] $@
+	@echo "[LD  ]" $@
 	@$(CC) -o $@ $^
 
 clean:
