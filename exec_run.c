@@ -1,5 +1,6 @@
 #include "templates.h"
 
+/* reserve words in stack */
 #define exec_reserve_stack(number) \
 	do { \
 		r->stack_ptr += number; \
@@ -9,18 +10,21 @@
 		} \
 	} while (0)
 
+/* restore words into stack */
 #define exec_free_stack(number) \
 	do { \
 		r->stack_ptr -= number; \
 		if (r->stack_ptr <= 0) { \
-			snprintf(r->e->error, ERROR_LEN, "stack overflow ( > 0)"); \
+			snprintf(r->e->error, ERROR_LEN, "stack overflow ( < 0)"); \
 			return -1; \
 		} \
 	} while (0)
 
+/* relative acces into stack */
 #define egt(relindex) \
 	r->stack[r->stack_ptr + relindex]
 
+/* execute function */
 #define exec_NODE(n, id, ret) \
 	do { \
 		int nid = id; \
@@ -70,9 +74,9 @@
 		exec_free_stack(2);
 	} while(0)
 
+/* return to caller
+ * for updating this function, run :r !./get_return_points.sh */
 #define switchline(index) case index: goto exec_ ## index;
-
-/* for updating this function, run :r !./get_return_points.sh */
 #define exec_return() \
 	switch (egt(-2).ent) { \
 		default: \
@@ -98,10 +102,12 @@
 			return -1; \
 	}
 
+/* this stats pseudo function */
 #define exec_function(xxx) \
 	exec_ ## xxx: \
 	do
 
+/* this end pseudo function */
 #define end_function \
 	while(0); \
 	snprintf(r->e->error, ERROR_LEN, \
@@ -111,11 +117,13 @@
 int exec_run_now(struct exec_run *r) {
 	void *ret;
 
+	/* go back at position in ENOENT write case */
 	if (r->retry != 0) switch(r->retry) {
 	case 1: goto retry_write_1;
 	case 2: goto retry_write_2;
 	}
 
+	/* call first node */
 	exec_NODE(r->n, 1, ret);
 	return 0;
 
