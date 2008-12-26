@@ -112,6 +112,7 @@ struct exec_run {
 	} stack[STACKSIZE];
 	int stack_ptr;
 	int retry;
+	char error[ERROR_LEN];
 };
 
 /**
@@ -123,7 +124,7 @@ struct exec *exec_new_template(void);
  * Parse file for template
  * @param e is template id
  * @param file is filename tio parse
- * @return 0 if ok, else -1
+ * @return struct exec if ok, NULL, if memory error
  */
 int exec_parse(struct exec *e, char *file);
 
@@ -189,6 +190,7 @@ void exec_run_set_write(struct exec_run *r, exec_write w) {
 /**
  * Initiate an execution session
  * @param e is template id
+ * @return struct exec_run if OK, NULL if memory error
  */
 struct exec_run *exec_new_run(struct exec *e);
 
@@ -196,6 +198,7 @@ struct exec_run *exec_new_run(struct exec *e);
  * get variable descriptor
  * @param e is template id
  * @param var is var name
+ * @return struct exec_vars if OK, NULL if var not found
  */
 struct exec_vars *exec_get_var(struct exec *e, char *str);
 
@@ -214,6 +217,7 @@ void exec_set_var(struct exec_run *r, struct exec_vars *v, void *val) {
  * execute template
  * @param r is run program id
  * @return 0: ended, 1: need write, -1: error
+ *     the error message contained is in r->error;
  */
 int exec_run_now(struct exec_run *r);
 
