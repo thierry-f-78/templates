@@ -43,7 +43,7 @@
 %}
 
 space           [ \t]+
-function        [a-zA-Z][a-zA-Z0-9]*
+function        [a-zA-Z][a-zA-Z0-9_]*
 var             $[a-zA-Z][a-zA-Z0-9]*
 num             -?[0-9]+
 hex             0x[0-9a-fA-F]+
