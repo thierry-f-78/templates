@@ -1,5 +1,10 @@
+/* with this, bison make reentrant code */
 %pure-parser
+
+/* this is the reentrant parameter given at all functions */
 %parse-param { struct yyargs_t *args }
+
+/* this is the reentrant parameter given at reentrant yylex function */
 %lex-param { yyscan_t args_scanner }
 
 %{
@@ -14,11 +19,15 @@
 #include "syntax.h"
 #include "templates.h"
 
+/* this fucking bison parser does not understand
+   "%lex-param { yyscan_t args->scanner }" */
 #define args_scanner args->scanner
 
+/* return the current "struct list_head" */
 #define stack_cur \
 	(&(args->stack[args->stack_idx]))
 
+/* init new stack element */
 #define stack_push() \
 	do { \
 		args->stack_idx++; \
@@ -29,6 +38,7 @@
 		INIT_LIST_HEAD(stack_cur); \
 	} while(0);
 
+/* pop the current element - this element id lost */
 #define stack_pop() \
 	do { \
 		args->stack_idx--; \
@@ -38,6 +48,7 @@
 		} \
 	} while(0);
 
+/* buils error message */
 int yyerror(struct yyargs_t *args, char *str) { 
 	snprintf(args->e->error, ERROR_LEN, "line %d: %s near '%s'",
 	         yyget_lineno(args->scanner), str, yyget_text(args->scanner)); 
@@ -48,22 +59,16 @@ int yyerror(struct yyargs_t *args, char *str) {
 
 %token PRINT
 
-%token OPENPAR
-%token CLOSEPAR
-
-%token OPENBLOCK
-%token CLOSEBLOCK
-
-// data const
+/* data const */
 %token VAR
 %token STR
 %token NUM
 
-// fucntion
+/* function */
 %token FUNCTION
 %token DISPLAY
 
-// statement
+/* statement */
 %token FOR
 %token WHILE
 %token IF
@@ -74,19 +79,24 @@ int yyerror(struct yyargs_t *args, char *str) {
 %token CASE
 %token DEFAULT
 
+/* separators */
+%token OPENPAR
+%token CLOSEPAR
+%token OPENBLOCK
+%token CLOSEBLOCK
 %token SEP
 %token COMMA
 %token ASSIGN
 %token COLON
 
-// operators
+/* operators */
 %token ADD
 %token SUB
 %token MUL
 %token DIV
 %token MOD
 
-// comparaisons
+/* comparators*/
 %token EQUAL
 %token STREQ
 %token DIFF
@@ -379,11 +389,10 @@ int exec_parse(struct exec *e, char *file) {
 	struct exec_node *n;
 	int ret;
 	struct yyargs_t yyargs;
-	struct yyargs_t *args = &yyargs;
 	yyscan_t scanner;
 	FILE *fd;
 
-	/* open, parse file and close */
+	/* open file */
 	fd = fopen(file, "r");
 	if (fd == NULL) {
 		ERRS("fopen(%s): %s\n", file, strerror(errno));
@@ -392,18 +401,20 @@ int exec_parse(struct exec *e, char *file) {
 
 	/* init flex context */
 	yylex_init(&scanner);
-	yyset_extra(args, scanner);
+	yyset_extra(&yyargs, scanner);
 	yyset_in(fd, scanner);
 
-	/* init stack */
-	args->stack_idx = 0;
-	args->scanner = scanner;
-	args->e = e;
-	INIT_LIST_HEAD(stack_cur);
+	/* init stack and general context */
+	yyargs.stack_idx = 0;
+	INIT_LIST_HEAD(&(yyargs.stack[yyargs.stack_idx]));
+	yyargs.scanner = scanner;
+	yyargs.e = e;
 	e->error[0] = '\0';
 
-	ret = yyparse(args);
+	/* execute parsing */
+	ret = yyparse(&yyargs);
 
+	/* destroy data */
 	yylex_destroy(scanner);
 	fclose(fd);
 
@@ -417,13 +428,13 @@ int exec_parse(struct exec *e, char *file) {
 		return -1;
 	}
 
-	/* final and first node, set it into template */
+	/* attach tree to the first node, set it into struct exec*/
 	n = exec_new(X_COLLEC, NULL, 0);
-	list_replace(stack_cur, &n->c);
-	n->line = 0;
+	n->p = NULL;
+	list_replace(&(yyargs.stack[yyargs.stack_idx]), &n->c);
 	e->program = n;
 
-	n->p = NULL;
+	/* this recurssive function update parent pointeur into the tree */
 	exec_set_parents(n);
 
 	return 0;

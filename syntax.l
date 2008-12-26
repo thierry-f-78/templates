@@ -1,6 +1,13 @@
+/* with this, flex make reentrant code */
 %option reentrant
+
+/* the function yywrap is not used */
 %option noyywrap
+
+/* build code for using bison with reentrant flex */
 %option bison-bridge
+
+/* flex count lines */
 %option yylineno
 
 %{
@@ -13,6 +20,7 @@
 #include "exec_internals.h"
 #include "template.h"
 
+/* this macro set error message into struct exec */
 #define seterror(fmt, args...) \
 	do { \
 		struct yyargs_t *arg = yyget_extra(yyscanner); \
@@ -33,14 +41,14 @@ block           "%>"([^<]|<[^\%])"<%"
 %%
 
 "%>"([^<]|<[^%])*"<%" {
-           	*yylval = exec_new(X_PRINT, exec_blockdup(yytext), yylineno);
-           	return PRINT; 
-           }
+		*yylval = exec_new(X_PRINT, exec_blockdup(yytext), yylineno);
+		return PRINT; 
+	}
 
 "{"        { return OPENBLOCK; }
 "}"        { return CLOSEBLOCK; }
 
-"("        {return OPENPAR; }
+"("        { return OPENPAR; }
 ")"        { return CLOSEPAR; }
 
 ","        { return COMMA; }
@@ -128,6 +136,6 @@ block           "%>"([^<]|<[^\%])"<%"
 /* just for removing this warning:
 syntax.c:1259: warning: 'yyunput' defined but not used
 */
-static inline void ________stupid_function_not_called(void) {
+static inline void ________stupid_function_never_called(void) {
 	yyunput('c', NULL, 0);
 }
