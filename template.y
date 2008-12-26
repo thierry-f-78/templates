@@ -52,8 +52,8 @@ int stack_idx = 0;
 	list_add_tail(new, head);
 
 int yyerror(char *str) {
-	fprintf (stderr, "\nline %d: %s en '%s'\n\n", yylineno, str, yytext);
-	exit(1);
+	fprintf (stderr, "line %d: %s en '%s'\n", yylineno, str, yytext);
+	return 0;
 }
 
 %}
@@ -386,8 +386,9 @@ Args:
 	;
 %%
 
-void exec_parse(struct exec *e, char *file) {
+int exec_parse(struct exec *e, char *file) {
 	struct exec_node *n;
+	int ret;
 
 #ifdef DEBUGING
 	yydebug = 1;
@@ -404,7 +405,9 @@ void exec_parse(struct exec *e, char *file) {
 		ERRS("open(%s): %s\n", file, strerror(errno));
 		exit(1);
 	}
-	yyparse();
+	ret = yyparse();
+	if (ret != 0)
+		return -1;
 	close(yyinputfd);
 
 	/* final and first node, set it into template */
@@ -415,4 +418,6 @@ void exec_parse(struct exec *e, char *file) {
 
 	n->p = NULL;
 	exec_set_parents(n);
+
+	return 0;
 }

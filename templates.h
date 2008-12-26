@@ -125,8 +125,9 @@ struct exec *exec_new_template(void);
  * Parse file for template
  * @param e is template id
  * @param file is filename tio parse
+ * @return 0 if ok, else -1
  */
-void exec_parse(struct exec *e, char *file);
+int exec_parse(struct exec *e, char *file);
 
 /**
  * Build dot graph for debugging program
