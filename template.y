@@ -114,6 +114,7 @@ int yyerror(char *str) { return 0; }
 %left MOD
 
 %left EQUAL
+%left STREQ
 %left DIFF
 %left LT
 %left GT
