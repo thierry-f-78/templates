@@ -10,6 +10,8 @@
 #include "templates.h"
 #include "exec_internals.h"
 
+#define YYPARSE_PARAM args
+
 #define STACK_SIZE 150
 
 #ifdef DEBUGING
@@ -21,27 +23,31 @@
 #endif
 
 int yyinputfd;
-struct list_head stack[STACK_SIZE];
-int stack_idx = 0;
 
-#define stack_cur (&stack[stack_idx])
+struct yyargs_t {
+	struct list_head stack[STACK_SIZE];
+	int stack_idx;
+};
+
+#define stack_cur \
+	(&(((struct yyargs_t *)args)->stack[((struct yyargs_t *)args)->stack_idx]))
 
 #define stack_push() \
 	do { \
-		stack_idx++; \
-		DEBUG("stack_push: %d", stack_idx); \
-		if (stack_idx == STACK_SIZE) { \
+		((struct yyargs_t *)args)->stack_idx++; \
+		DEBUG("stack_push: %d", ((struct yyargs_t *)args)->stack_idx); \
+		if (((struct yyargs_t *)args)->stack_idx == STACK_SIZE) { \
 			fprintf(stderr, "stack full\n"); \
 			exit(1); \
 		} \
-		INIT_LIST_HEAD(&stack[stack_idx]); \
+		INIT_LIST_HEAD(&((struct yyargs_t *)args)->stack[((struct yyargs_t *)args)->stack_idx]); \
 	} while(0);
 
 #define stack_pop() \
 	do { \
-		stack_idx--; \
-		DEBUG("stack_pop: %d", stack_idx); \
-		if (stack_idx == -1) { \
+		((struct yyargs_t *)args)->stack_idx--; \
+		DEBUG("stack_pop: %d", ((struct yyargs_t *)args)->stack_idx); \
+		if (((struct yyargs_t *)args)->stack_idx == -1) { \
 			ERRS("stack_pop: negative index"); \
 			exit(1); \
 		} \
@@ -389,6 +395,8 @@ Args:
 int exec_parse(struct exec *e, char *file) {
 	struct exec_node *n;
 	int ret;
+	struct yyargs_t yyargs;
+	void *args = &yyargs;
 
 #ifdef DEBUGING
 	yydebug = 1;
@@ -396,16 +404,18 @@ int exec_parse(struct exec *e, char *file) {
 
 	exec_template = e;
 
-	/* init stack */
-	INIT_LIST_HEAD(stack_cur);
-
 	/* open, parse file and close */
 	yyinputfd = open(file, O_RDONLY);
 	if (yyinputfd < 0) {
 		ERRS("open(%s): %s\n", file, strerror(errno));
 		exit(1);
 	}
-	ret = yyparse();
+
+	/* init stack */
+	yyargs.stack_idx = 0;
+	INIT_LIST_HEAD(stack_cur);
+
+	ret = yyparse(args);
 	if (ret != 0)
 		return -1;
 	close(yyinputfd);
