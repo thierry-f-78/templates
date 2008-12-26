@@ -23,7 +23,7 @@ ifneq ($(V),1)
 %.c: %.l
 	@echo "[LEX ] $@"
 	@$(RM) $@
-	@$(LEX.l) --header-file=toto.h $< > $@
+	@$(LEX.l) $< > $@
 	@sed -i 's/"<stdout>"/"$@"/g' $@
 
 %.h: %.l
@@ -88,7 +88,7 @@ templates: client.o libtemplates.a
 	@$(CC) -o $@ $^
 
 clean:
-	rm -f $(OBJS) $(FILES) libtemplates.a
+	rm -f $(OBJS) $(FILES) libtemplates.a client.o
 
 dot:
 	cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf

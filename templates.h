@@ -58,6 +58,9 @@ extern struct exec *exec_template;
 /* execute template stak */
 #define STACKSIZE 1024
 
+/* max size for an error string */
+#define ERROR_LEN 128
+
 union exec_args {
 	int integer;
 	char *string;
@@ -98,6 +101,7 @@ struct exec {
 	struct list_head funcs;
 	void *arg;
 	exec_write w;
+	char error[ERROR_LEN];
 };
 
 struct exec_run {

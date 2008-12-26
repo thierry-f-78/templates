@@ -1,4 +1,4 @@
-%option noyywrap
+%option reentrant noyywrap bison-bridge yylineno
 
 %{
 #include <stdlib.h>
@@ -100,6 +100,7 @@ const char *n2str(int code) {
 #	define A \
 	       do { DEBUGI("***[%s]***", yytext); } while (0); 
 
+	       //YYSTYPE *yylval = yyget_lval(scanner);
 #	undef A
 #	define A
 
@@ -111,14 +112,13 @@ const char *n2str(int code) {
 
 #endif
 
-extern int yyerror(char *str);
-extern int yyinputfd;
+//extern int yyerror(char *str);
 
-#define YY_INPUT(buf,result,max_size) \
+#define seterror(fmt, args...) \
 	do { \
-		result = read(yyinputfd, (buf), (max_size)); \
-		if ((result) == 0) \
-			(result) = YY_NULL; \
+		struct yyargs_t *arg = yyget_extra(yyscanner); \
+		snprintf(arg->e->error, ERROR_LEN, fmt, ##args); \
+		return 1; \
 	} while(0);
 
 %}
@@ -134,12 +134,8 @@ block           "%>"([^<]|<[^\%])"<%"
 %%
 
 "%>"([^<]|<[^%])*"<%" {
-           	char *p;
            	D;
-           	for (p=yytext; *p!='\0'; p++)
-           		if (*p == '\n') 
-           			yylineno++;
-           	yylval = exec_new(X_PRINT, exec_blockdup(yytext), yylineno);
+           	*yylval = exec_new(X_PRINT, exec_blockdup(yytext), yylineno);
            	RETURN(PRINT); 
            }
 
@@ -153,44 +149,44 @@ block           "%>"([^<]|<[^\%])"<%"
 ";"        {D; RETURN(SEP); }
 ":"        {D; RETURN(COLON); }
 
-"for"      {D; yylval = exec_new(X_FOR,    NULL, yylineno); RETURN(FOR); }
-"while"    {D; yylval = exec_new(X_WHILE,  NULL, yylineno); RETURN(WHILE); }
-"if"       {D; yylval = exec_new(X_IF,     NULL, yylineno); RETURN(IF); }
+"for"      {D; *yylval = exec_new(X_FOR,    NULL, yylineno); RETURN(FOR); }
+"while"    {D; *yylval = exec_new(X_WHILE,  NULL, yylineno); RETURN(WHILE); }
+"if"       {D; *yylval = exec_new(X_IF,     NULL, yylineno); RETURN(IF); }
 "else"     {D; RETURN(ELSE); }
-"break"    {D; yylval = exec_new(X_BREAK,  NULL, yylineno); RETURN(BREAK); }
-"continue" {D; yylval = exec_new(X_CONT,   NULL, yylineno); RETURN(CONT); }
-"switch"   {D; yylval = exec_new(X_SWITCH, NULL, yylineno); RETURN(SWITCH); }
+"break"    {D; *yylval = exec_new(X_BREAK,  NULL, yylineno); RETURN(BREAK); }
+"continue" {D; *yylval = exec_new(X_CONT,   NULL, yylineno); RETURN(CONT); }
+"switch"   {D; *yylval = exec_new(X_SWITCH, NULL, yylineno); RETURN(SWITCH); }
 "case"     {D; RETURN(CASE); }
 "default"  {D; RETURN(DEFAULT); }
 
-"="        {D; yylval = exec_new(X_ASSIGN, NULL, yylineno); RETURN(ASSIGN); }
-"+"        {D; yylval = exec_new(X_ADD,    NULL, yylineno); RETURN(ADD); }
-"-"        {D; yylval = exec_new(X_SUB,    NULL, yylineno); RETURN(SUB); }
-"*"        {D; yylval = exec_new(X_MUL,    NULL, yylineno); RETURN(MUL); }
-"/"        {D; yylval = exec_new(X_DIV,    NULL, yylineno); RETURN(DIV); }
-"%"        {D; yylval = exec_new(X_MOD,    NULL, yylineno); RETURN(MOD); }
+"="        {D; *yylval = exec_new(X_ASSIGN, NULL, yylineno); RETURN(ASSIGN); }
+"+"        {D; *yylval = exec_new(X_ADD,    NULL, yylineno); RETURN(ADD); }
+"-"        {D; *yylval = exec_new(X_SUB,    NULL, yylineno); RETURN(SUB); }
+"*"        {D; *yylval = exec_new(X_MUL,    NULL, yylineno); RETURN(MUL); }
+"/"        {D; *yylval = exec_new(X_DIV,    NULL, yylineno); RETURN(DIV); }
+"%"        {D; *yylval = exec_new(X_MOD,    NULL, yylineno); RETURN(MOD); }
 
-"=="       {D; yylval = exec_new(X_EQUAL,  NULL, yylineno); RETURN(EQUAL); }
-"==="      {D; yylval = exec_new(X_STREQ,  NULL, yylineno); RETURN(STREQ); }
-"!="       {D; yylval = exec_new(X_DIFF,   NULL, yylineno); RETURN(DIFF); }
-"&&"       {D; yylval = exec_new(X_AND,    NULL, yylineno); RETURN(AND); }
-"||"       {D; yylval = exec_new(X_OR,     NULL, yylineno); RETURN(OR); }
-"<"        {D; yylval = exec_new(X_LT,     NULL, yylineno); RETURN(LT); }
-">"        {D; yylval = exec_new(X_GT,     NULL, yylineno); RETURN(GT); }
-">="       {D; yylval = exec_new(X_GE,     NULL, yylineno); RETURN(GE); }
-"<="       {D; yylval = exec_new(X_LE,     NULL, yylineno); RETURN(LE); }
+"=="       {D; *yylval = exec_new(X_EQUAL,  NULL, yylineno); RETURN(EQUAL); }
+"==="      {D; *yylval = exec_new(X_STREQ,  NULL, yylineno); RETURN(STREQ); }
+"!="       {D; *yylval = exec_new(X_DIFF,   NULL, yylineno); RETURN(DIFF); }
+"&&"       {D; *yylval = exec_new(X_AND,    NULL, yylineno); RETURN(AND); }
+"||"       {D; *yylval = exec_new(X_OR,     NULL, yylineno); RETURN(OR); }
+"<"        {D; *yylval = exec_new(X_LT,     NULL, yylineno); RETURN(LT); }
+">"        {D; *yylval = exec_new(X_GT,     NULL, yylineno); RETURN(GT); }
+">="       {D; *yylval = exec_new(X_GE,     NULL, yylineno); RETURN(GE); }
+"<="       {D; *yylval = exec_new(X_LE,     NULL, yylineno); RETURN(LE); }
 
-"display"  {D; yylval = exec_new(X_DISPLAY,NULL, yylineno); RETURN(DISPLAY); }
+"display"  {D; *yylval = exec_new(X_DISPLAY,NULL, yylineno); RETURN(DISPLAY); }
 
 {str}      {
 		void *val;
 		D;
 		val = exec_strdup(yytext);
-		yylval = exec_new(X_STRING, val, yylineno);
+		*yylval = exec_new(X_STRING, val, yylineno);
 		RETURN(STR);
 	}
 "NULL"     {
-	yylval = exec_new(X_INTEGER, 0, yylineno);
+	*yylval = exec_new(X_INTEGER, 0, yylineno);
 	RETURN(NUM);
 }
 ({num}|{hex}) {
@@ -198,31 +194,39 @@ block           "%>"([^<]|<[^\%])"<%"
 		char *error;
 		D;
 		val = (void *)strtol(yytext, &error, 0);
-		if (*error != '\0')
-			yyerror("Not a number");
-		yylval = exec_new(X_INTEGER, val, yylineno);
+		if (*error != '\0') {
+			seterror("line %d: '%s' not a number", yylineno, yytext);
+			return 0;
+		}
+		*yylval = exec_new(X_INTEGER, val, yylineno);
 		RETURN(NUM);
 	}
 {var}      {
 		void *val;
 		D;
 		val = exec_var(yytext);
-		yylval = exec_new(X_VAR, val, yylineno);
+		*yylval = exec_new(X_VAR, val, yylineno);
 		RETURN(VAR);
 	}
 {function} {
 		void *val;
 		D;
 		val = exec_func(yytext);
-		if (val == NULL)
-			yyerror("Function not found");
-		yylval = exec_new(X_FUNCTION, val, yylineno);
+		if (val == NULL) {
+			seterror("line %d: '%s' function not found", yylineno, yytext);
+			return 0;
+		}
+		*yylval = exec_new(X_FUNCTION, val, yylineno);
 		RETURN(FUNCTION);
 	}
 
 {space}    {A; }
-.          {D; yyerror("unexpected character"); }
-"\n"       {A; yylineno++; }
+.          {
+		D; 
+		seterror("line %d: '%s' unexpected character", yylineno, yytext);
+		return 0;
+	}
+"\n"       {A; }
 
 %%
 
@@ -230,5 +234,5 @@ block           "%>"([^<]|<[^\%])"<%"
 syntax.c:1259: warning: 'yyunput' defined but not used
 */
 static inline void ________stupid_function_not_called(void) {
-	unput('c');
+	yyunput('c', NULL, 0);
 }

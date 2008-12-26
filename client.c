@@ -11,6 +11,7 @@ ssize_t testwrite(void *arg, const void *buf, size_t count) {
 int main(int argc, char *argv[]) {
 	struct exec *e;
 	struct exec_run *r;
+	int ret;
 	struct timeval tv1;
 	struct timeval tv2;
 	struct timeval tv3;
@@ -27,7 +28,11 @@ int main(int argc, char *argv[]) {
 	exec_set_write(e, testwrite);
 	exec_set_easy(e, NULL);
 
-	exec_parse(e, argv[1]);
+	ret = exec_parse(e, argv[1]);
+	if (ret != 0) {
+		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		exit(1);
+	}
 
 	exec_display(e, "a", 0);
 

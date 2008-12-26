@@ -6,13 +6,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define YYPARSE_PARAM args
+#define YYLEX_PARAM &yylval, ((struct yyargs_t *)args)->scanner
+
+#include "exec_internals.h"
 #include "syntax.h"
 #include "templates.h"
-#include "exec_internals.h"
 
-#define YYPARSE_PARAM args
-
-#define STACK_SIZE 150
 
 #ifdef DEBUGING
 #	define DEBUG(fmt, args...) \
@@ -22,32 +22,27 @@
 #	define DEBUG(fmt, args...)
 #endif
 
-int yyinputfd;
-
-struct yyargs_t {
-	struct list_head stack[STACK_SIZE];
-	int stack_idx;
-};
+#define args_cur ((struct yyargs_t *)args)
 
 #define stack_cur \
-	(&(((struct yyargs_t *)args)->stack[((struct yyargs_t *)args)->stack_idx]))
+	(&(args_cur->stack[args_cur->stack_idx]))
 
 #define stack_push() \
 	do { \
-		((struct yyargs_t *)args)->stack_idx++; \
-		DEBUG("stack_push: %d", ((struct yyargs_t *)args)->stack_idx); \
-		if (((struct yyargs_t *)args)->stack_idx == STACK_SIZE) { \
+		args_cur->stack_idx++; \
+		DEBUG("stack_push: %d", args_cur->stack_idx); \
+		if (args_cur->stack_idx == STACK_SIZE) { \
 			fprintf(stderr, "stack full\n"); \
 			exit(1); \
 		} \
-		INIT_LIST_HEAD(&((struct yyargs_t *)args)->stack[((struct yyargs_t *)args)->stack_idx]); \
+		INIT_LIST_HEAD(&(args_cur->stack[args_cur->stack_idx])); \
 	} while(0);
 
 #define stack_pop() \
 	do { \
-		((struct yyargs_t *)args)->stack_idx--; \
-		DEBUG("stack_pop: %d", ((struct yyargs_t *)args)->stack_idx); \
-		if (((struct yyargs_t *)args)->stack_idx == -1) { \
+		args_cur->stack_idx--; \
+		DEBUG("stack_pop: %d", args_cur->stack_idx); \
+		if (args_cur->stack_idx == -1) { \
 			ERRS("stack_pop: negative index"); \
 			exit(1); \
 		} \
@@ -57,10 +52,7 @@ struct yyargs_t {
 	DEBUG("my_list_add_tail(%p, %p)", new, head); \
 	list_add_tail(new, head);
 
-int yyerror(char *str) {
-	fprintf (stderr, "line %d: %s en '%s'\n", yylineno, str, yytext);
-	return 0;
-}
+int yyerror(char *str) { return 0; }
 
 %}
 
@@ -188,7 +180,7 @@ Block:
 	{ stack_push(); } InputElement
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL, yylineno);
+			n = exec_new(X_COLLEC, NULL, -1);
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			$$ = n;
@@ -196,7 +188,7 @@ Block:
 	| OPENBLOCK { stack_push(); } Input CLOSEBLOCK
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL, yylineno);
+			n = exec_new(X_COLLEC, NULL, -1);
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			$$ = n;
@@ -225,7 +217,7 @@ SwitchBlock:
 	SwitchKey { stack_push(); } Input
 		{
 			struct exec_node *n;
-			n = exec_new(X_COLLEC, NULL, yylineno);
+			n = exec_new(X_COLLEC, NULL, -1);
 			list_replace(stack_cur, &n->c);
 			stack_pop();
 			my_list_add_tail(&n->b, stack_cur);
@@ -237,7 +229,7 @@ SwitchKey:
 	| DEFAULT COLON
 		{
 			struct exec_node *n;
-			n = exec_new(X_NULL, NULL, yylineno);
+			n = exec_new(X_NULL, NULL, -1);
 			my_list_add_tail(&n->b, stack_cur);
 		}
 
@@ -396,8 +388,9 @@ int exec_parse(struct exec *e, char *file) {
 	struct exec_node *n;
 	int ret;
 	struct yyargs_t yyargs;
-	void *args = &yyargs;
-
+	struct yyargs_t *args = &yyargs;
+	yyscan_t scanner;
+	FILE *fd;
 #ifdef DEBUGING
 	yydebug = 1;
 #endif
@@ -405,29 +398,47 @@ int exec_parse(struct exec *e, char *file) {
 	exec_template = e;
 
 	/* open, parse file and close */
-	yyinputfd = open(file, O_RDONLY);
-	if (yyinputfd < 0) {
-		ERRS("open(%s): %s\n", file, strerror(errno));
+	fd = fopen(file, "r");
+	if (fd == NULL) {
+		ERRS("fopen(%s): %s\n", file, strerror(errno));
 		exit(1);
 	}
 
+	/* init flex context */
+	yylex_init(&scanner);
+	yyset_extra(args, scanner);
+	yyset_in(fd, scanner);
+
 	/* init stack */
-	yyargs.stack_idx = 0;
+	args->stack_idx = 0;
+	args->scanner = scanner;
+	args->e = e;
 	INIT_LIST_HEAD(stack_cur);
+	e->error[0] = '\0';
 
 	ret = yyparse(args);
-	if (ret != 0)
+
+	fclose(fd);
+
+	if (ret != 0) {
+		if (e->error[0] == '\0')
+			snprintf(e->error, ERROR_LEN, "line %d: syntax error near '%s'",
+			         yyget_lineno(scanner), yyget_text(scanner)); 
+
+			yylex_destroy(scanner);
 		return -1;
-	close(yyinputfd);
+	}
 
 	/* final and first node, set it into template */
-	n = exec_new(X_COLLEC, NULL, yylineno);
+	n = exec_new(X_COLLEC, NULL, 0);
 	list_replace(stack_cur, &n->c);
 	n->line = 0;
 	e->program = n;
 
 	n->p = NULL;
 	exec_set_parents(n);
+
+	yylex_destroy(scanner);
 
 	return 0;
 }
