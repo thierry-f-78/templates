@@ -50,6 +50,8 @@
 
 /* buils error message */
 int yyerror(struct yyargs_t *args, char *str) { 
+	if (args->e->error[0] != '\0')
+		return 0;
 	snprintf(args->e->error, ERROR_LEN, "line %d: %s near '%s'",
 	         yyget_lineno(args->scanner), str, yyget_text(args->scanner)); 
 	return 0; 
