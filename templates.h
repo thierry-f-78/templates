@@ -46,6 +46,14 @@ enum exec_type {
 	X_CONT
 };
 
+enum exec_args_type {
+	XT_STRING,
+	XT_INTEGER,
+	XT_VAR,
+	XT_FUNC,
+	XT_PTR
+};
+
 /* maximiun argument can be given at function */
 #define MXARGS 20
 
@@ -55,15 +63,22 @@ enum exec_type {
 /* max size for an error string */
 #define ERROR_LEN 128
 
-union exec_args {
-	int integer;
-	char *string;
-	struct exec_vars *var;
-	struct exec_funcs *func;
-	void *ptr;
+struct exec_args {
+	union {
+		int ent;
+		char *str;
+		struct exec_vars *var;
+		struct exec_funcs *func;
+		struct exec_node *n;
+		void *ptr;
+	} v;
+	int len;
+	enum exec_args_type type;
+	char freeit;
 };
 
-typedef void *(*exec_function)(void *easy, union exec_args *args, int nargs);
+typedef int (*exec_function)(void *easy, struct exec_args *args, int nargs,
+                             struct exec_args *ret);
 typedef ssize_t (*exec_write)(void *easy, const void *buf, size_t count);
 
 struct exec_vars {
@@ -84,7 +99,7 @@ struct exec_node {
 	struct list_head b;  /* brother */
 
 	enum exec_type type;
-	union exec_args v;
+	struct exec_args v;
 	int line;
 };
 
@@ -99,17 +114,12 @@ struct exec {
 };
 
 struct exec_run {
-	union exec_args *vars;
+	struct exec_args *vars;
 	void *arg;
 	exec_write w;
 	struct exec *e;
 	struct exec_node *n;
-	union {
-		int ent;
-		struct exec_node *n;
-		char *string;
-		void *ptr;
-	} stack[STACKSIZE];
+	struct exec_args stack[STACKSIZE];
 	int stack_ptr;
 	int retry;
 	char error[ERROR_LEN];

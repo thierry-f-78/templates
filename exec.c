@@ -57,7 +57,9 @@ struct exec_node *exec_new(struct exec *e, enum exec_type type, void *value, int
 	}
 
 	n->type = type;
-	n->v.ptr = value;
+	n->v.v.ptr = value;
+	if (type == X_STRING || type == X_PRINT)
+		n->v.len = strlen(n->v.v.str);
 	n->line = line;
 	INIT_LIST_HEAD(&n->c);
 

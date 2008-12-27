@@ -29,10 +29,9 @@
 #define exec_NODE(__node, __id, __ret) \
 	do { \
 		struct exec_node *node = __node; \
-		void *____ret; \
 		exec_reserve_stack(2); \
-		egt(-2).ent = __id; \
-		egt(-1).n = node; \
+		egt(-2).v.ent = __id; \
+		egt(-1).v.n = node; \
 		switch (node->type) { \
 		case X_NULL: goto exec_X_NULL; \
 		case X_COLLEC: goto exec_X_COLLEC; \
@@ -70,16 +69,17 @@
 			return -1; \
 		} \
 		exec_ ## __id: \
-		____ret = egt(-1).ptr; \
 		exec_free_stack(2); \
-		__ret = ____ret; \
+		/* c'est un peu degeulasse: ja vais chercher \
+		   des données dans la stack libérée */ \
+		memcpy(&__ret, &egt(1), sizeof(__ret)); \
 	} while(0)
 
 /* return to caller
  * for updating this function, run :r !./get_return_points.sh */
 #define switchline(index) case index: goto exec_ ## index;
 #define exec_return() \
-	switch (egt(-2).ent) { \
+	switch (egt(-2).v.ent) { \
 		default: \
 		switchline(1) \
 		switchline(2) \
@@ -116,7 +116,7 @@
 	return -1;
 
 int exec_run_now(struct exec_run *r) {
-	void *ret;
+	struct exec_args ret;
 
 	/* go back at position in ENOENT write case */
 	if (r->retry != 0) switch(r->retry) {
@@ -134,7 +134,7 @@ int exec_run_now(struct exec_run *r) {
 *
 **********************************************************************/
 	exec_function(X_NULL) {
-		egt(-1).ptr = NULL;
+		memset(&egt(-1), 0, sizeof(egt(-1)));
 		exec_return();
 	} end_function
 
@@ -153,28 +153,27 @@ int exec_run_now(struct exec_run *r) {
 		exec_reserve_stack(4);
 
 		/* get children containing how to display */
-		egt(-4).n = container_of(egt(-5).n->c.next,
-		                         struct exec_node, b);
+		egt(-4).v.n = container_of(egt(-5).v.n->c.next,
+		                           struct exec_node, b);
 
 		/* execute children */
-		exec_NODE(egt(-4).n, 2, egt(-3).ptr);
+		exec_NODE(egt(-4).v.n, 2, egt(-3));
 
-		egt(-1).ent = strlen(egt(-3).string);
-		egt(-2).ent = egt(-1).ent;
+		egt(-1).v.ent = egt(-3).len;
+		egt(-2).v.ent = egt(-1).v.ent;
 	
 		/* write */
 		retry_write_1:
-		egt(-2).ent -= r->w(r->arg,
-		                    egt(-3).string + ( egt(-1).ent - egt(-2).ent ),
-		                    egt(-2).ent);
+		egt(-2).v.ent -= r->w(r->arg,
+		                      egt(-3).v.str + ( egt(-1).v.ent - egt(-2).v.ent ),
+		                      egt(-2).v.ent);
 
 		/* end of write ? */
-		if (egt(-2).ent > 0) {
+		if (egt(-2).v.ent > 0) {
 			r->retry = 1;
 			return 1;
 		}
 
-		egt(-5).ptr = NULL;
 		exec_free_stack(4);
 		exec_return();
 	} end_function
@@ -192,22 +191,21 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(2);
 
-		egt(-1).ent = strlen(egt(-3).n->v.string);
-		egt(-2).ent = egt(-1).ent;
+		egt(-1).v.ent = egt(-3).v.n->v.len;
+		egt(-2).v.ent = egt(-1).v.ent;
 
 		/* write */
 		retry_write_2:
-		egt(-2).ent -= r->w(r->arg,
-		                    egt(-3).n->v.string + ( egt(-1).ent - egt(-2).ent ),
-		                    egt(-2).ent);
+		egt(-2).v.ent -= r->w(r->arg,
+		                      egt(-3).v.n->v.v.str + ( egt(-1).v.ent - egt(-2).v.ent ),
+		                      egt(-2).v.ent);
 
 		/* end of write ? */
-		if (egt(-2).ent > 0) {
+		if (egt(-2).v.ent > 0) {
 			r->retry = 2;
 			return 1;
 		}
 
-		egt(-1).ptr = NULL;
 		exec_free_stack(2);
 		exec_return();
 	} end_function
@@ -224,36 +222,36 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(1);
 
-		egt(-1).n = container_of(egt(-2).n->c.next, struct exec_node, b);
+		egt(-1).v.n = container_of(egt(-2).v.n->c.next, struct exec_node, b);
 
 		//exec_X_COLLEC_loop:
 		while (1) {
 
 			/* if break */
-			if (egt(-1).n->type == X_BREAK) {
-				egt(-2).ent = -1;
+			if (egt(-1).v.n->type == X_BREAK) {
+				egt(-2).v.ent = -1;
 				break;
 			}
 
 			/* if continue */
-			if (egt(-1).n->type == X_CONT) {
-				egt(-2).ent = -2;
+			if (egt(-1).v.n->type == X_CONT) {
+				egt(-2).v.ent = -2;
 				break;
 			}
 
 			/* execute */
-			exec_NODE(egt(-1).n, 3, ret);
+			exec_NODE(egt(-1).v.n, 3, ret);
 
 			/* if "if" return break or continue */
-			if (egt(-1).n->type == X_IF && ret != NULL) {
-				egt(-2).ptr = ret;
+			if (egt(-1).v.n->type == X_IF && ret.v.ent != 0) {
+				egt(-2).v.ent = ret.v.ent;
 				break;
 			}
 
 			/* next var */
-			egt(-1).n = container_of(egt(-1).n->b.next, struct exec_node, b);
-			if (&egt(-1).n->b == &egt(-2).n->c) {
-				egt(-2).ptr = NULL;
+			egt(-1).v.n = container_of(egt(-1).v.n->b.next, struct exec_node, b);
+			if (&egt(-1).v.n->b == &egt(-2).v.n->c) {
+				egt(-2).v.ptr = NULL;
 				break;
 			}
 		}
@@ -288,27 +286,27 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(2);
 
-		egt(-2).n = container_of(egt(-3).n->c.next, struct exec_node, b);
-		egt(-1).n = container_of(egt(-2).n->b.next, struct exec_node, b);
+		egt(-2).v.n = container_of(egt(-3).v.n->c.next, struct exec_node, b);
+		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
 
-		exec_NODE(egt(-2).n, 4, egt(-2).ptr);
-		exec_NODE(egt(-1).n, 5, egt(-1).ptr);
+		exec_NODE(egt(-2).v.n, 4, egt(-2));
+		exec_NODE(egt(-1).v.n, 5, egt(-1));
 
-		switch (egt(-3).n->type) {
-		case X_ADD:   egt(-3).ent = egt(-2).ent  + egt(-1).ent;             break;
-		case X_SUB:   egt(-3).ent = egt(-2).ent  - egt(-1).ent;             break;
-		case X_MUL:   egt(-3).ent = egt(-2).ent  * egt(-1).ent;             break;
-		case X_DIV:   egt(-3).ent = egt(-2).ent  / egt(-1).ent;             break;
-		case X_MOD:   egt(-3).ent = egt(-2).ent  % egt(-1).ent;             break;
-		case X_EQUAL: egt(-3).ent = egt(-2).ent == egt(-1).ent;             break;
-		case X_STREQ: egt(-3).ent = strcmp(egt(-2).string, egt(-1).string); break;
-		case X_DIFF:  egt(-3).ent = egt(-2).ent != egt(-1).ent;             break;
-		case X_LT:    egt(-3).ent = egt(-2).ent  < egt(-1).ent;             break;
-		case X_GT:    egt(-3).ent = egt(-2).ent  > egt(-1).ent;             break;
-		case X_LE:    egt(-3).ent = egt(-2).ent <= egt(-1).ent;             break;
-		case X_GE:    egt(-3).ent = egt(-2).ent >= egt(-1).ent;             break;
-		case X_AND:   egt(-3).ent = egt(-2).ent && egt(-1).ent;             break;
-		case X_OR:    egt(-3).ent = egt(-2).ent || egt(-1).ent;             break;
+		switch (egt(-3).v.n->type) {
+		case X_ADD:   egt(-3).v.ent = egt(-2).v.ent  + egt(-1).v.ent;       break;
+		case X_SUB:   egt(-3).v.ent = egt(-2).v.ent  - egt(-1).v.ent;       break;
+		case X_MUL:   egt(-3).v.ent = egt(-2).v.ent  * egt(-1).v.ent;       break;
+		case X_DIV:   egt(-3).v.ent = egt(-2).v.ent  / egt(-1).v.ent;       break;
+		case X_MOD:   egt(-3).v.ent = egt(-2).v.ent  % egt(-1).v.ent;       break;
+		case X_EQUAL: egt(-3).v.ent = egt(-2).v.ent == egt(-1).v.ent;       break;
+		case X_STREQ: egt(-3).v.ent = strcmp(egt(-2).v.str, egt(-1).v.str); break;
+		case X_DIFF:  egt(-3).v.ent = egt(-2).v.ent != egt(-1).v.ent;       break;
+		case X_LT:    egt(-3).v.ent = egt(-2).v.ent  < egt(-1).v.ent;       break;
+		case X_GT:    egt(-3).v.ent = egt(-2).v.ent  > egt(-1).v.ent;       break;
+		case X_LE:    egt(-3).v.ent = egt(-2).v.ent <= egt(-1).v.ent;       break;
+		case X_GE:    egt(-3).v.ent = egt(-2).v.ent >= egt(-1).v.ent;       break;
+		case X_AND:   egt(-3).v.ent = egt(-2).v.ent && egt(-1).v.ent;       break;
+		case X_OR:    egt(-3).v.ent = egt(-2).v.ent || egt(-1).v.ent;       break;
 		/* just for warnings ! */
 		case X_NULL:
 		case X_COLLEC:
@@ -346,15 +344,13 @@ int exec_run_now(struct exec_run *r) {
 		 * -1 : b
 		 */
 		exec_reserve_stack(2);
-		void *val;
 
-		egt(-2).n = container_of(egt(-3).n->c.next, struct exec_node, b);
-		egt(-1).n = container_of(egt(-2).n->b.next, struct exec_node, b);
+		egt(-2).v.n = container_of(egt(-3).v.n->c.next, struct exec_node, b);
+		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
 
-		exec_NODE(egt(-1).n, 30, val);
-		r->vars[egt(-2).n->v.var->offset].ptr = val;
+		exec_NODE(egt(-1).v.n, 30, r->vars[ egt(-2).v.n->v.v.var->offset ]);
 
-		egt(-3).ptr = r->vars[egt(-2).n->v.var->offset].ptr;
+		memcpy(&egt(-3), &r->vars[ egt(-2).v.n->v.v.var->offset], sizeof(egt(-3)));
 		exec_free_stack(2);
 		exec_return();
 	} end_function
@@ -373,36 +369,38 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(MXARGS + 2);
 		int i;
-		union exec_args args[MXARGS];
+		struct exec_args args[MXARGS];
 
 		/* nargs = 0 */
-		egt(-(MXARGS+1)).ent = 0;
+		egt(-(MXARGS+1)).v.ent = 0;
 
 		/* build args array */
-		egt(-(MXARGS+2)).n = container_of(egt(-(MXARGS+3)).n->c.next,
-		                                  struct exec_node, b);
+		egt(-(MXARGS+2)).v.n = container_of(egt(-(MXARGS+3)).v.n->c.next,
+		                                    struct exec_node, b);
 		while (1) {
 			/* le tour est fait */
-			if (&egt(-(MXARGS+2)).n->b == &egt(-(MXARGS+3)).n->c)
+			if (&egt(-(MXARGS+2)).v.n->b == &egt(-(MXARGS+3)).v.n->c)
 				break;
 
-			exec_NODE(egt(-(MXARGS+2)).n, 31, ret);
-			if (egt(-(MXARGS+1)).ent == MXARGS) {
+			/* check for aversize */
+			if (egt(-(MXARGS+1)).v.ent == MXARGS) {
 				snprintf(r->error, ERROR_LEN, "function are more than 20 args");
 				return -1;
 			}
-			egt(-1-egt(-(MXARGS+1)).ent).ptr = ret;
-			egt(-(MXARGS+1)).ent++;
+
+			exec_NODE(egt(-(MXARGS+2)).v.n, 31, egt(-1-egt(-(MXARGS+1)).v.ent));
+			egt(-(MXARGS+1)).v.ent++;
 
 			/* next var */
-			egt(-(MXARGS+2)).n = container_of(egt(-(MXARGS+2)).n->b.next, struct exec_node, b);
+			egt(-(MXARGS+2)).v.n = container_of(egt(-(MXARGS+2)).v.n->b.next, struct exec_node, b);
 		}
 
-		for (i=0; i<egt(-(MXARGS+1)).ent; i++)
-			args[i].ptr = egt(-1-i).ptr;
+		/* copy args TODO: faut voir si il ne vaut mieux pas donner un morceau de pile ... */
+		for (i=0; i<egt(-(MXARGS+1)).v.ent; i++)
+			memcpy(&args[i], &egt(-1-i), sizeof(egt(-1-i)));
 
-		egt(-(MXARGS+3)).ptr =
-		      egt(-(MXARGS+3)).n->v.func->f(r->arg, args, egt(-(MXARGS+1)).ent);
+		/* exec function */
+		egt(-(MXARGS+3)).v.n->v.v.func->f(r->arg, args, egt(-(MXARGS+1)).v.ent, &egt(-(MXARGS+3)));
 
 		exec_free_stack(MXARGS + 2);
 		exec_return();
@@ -423,32 +421,42 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(4);
 
-		egt(-4).n = container_of(egt(-5).n->c.next, struct exec_node, b);
-		egt(-2).n = egt(-4).n;
-		egt(-1).ent = 0;
+		/* get var */
+		egt(-4).v.n = container_of(egt(-5).v.n->c.next, struct exec_node, b);
+
+		/* set reference into -4. with this, the first get of
+		   the loop point on the good value */
+		egt(-2).v.n = egt(-4).v.n;
+
+		/* init already exec at 0 */
+		egt(-1).v.ent = 0;
 
 		while (1) {
 
-			egt(-3).n = container_of(egt(-2).n->b.next, struct exec_node, b);
-			egt(-2).n = container_of(egt(-3).n->b.next, struct exec_node, b);
+			egt(-3).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
+			egt(-2).v.n = container_of(egt(-3).v.n->b.next, struct exec_node, b);
 
 			/* on a fait le tour */
-			if (&egt(-3).n->b == &egt(-5).n->c)
+			if (&egt(-3).v.n->b == &egt(-5).v.n->c)
 				break;
 
 			/* on execute si:
 			   - on a deja executé
 			   - c'est default
 			   - c'est la bonne valeur */
-			exec_NODE(egt(-4).n, 32, ret);
-			if (egt(-1).ent == 1 ||
-			    egt(-3).n->type == X_NULL ||
-			    egt(-3).n->v.ptr == ret) {
-				exec_NODE(egt(-2).n, 33, ret);
-				egt(-1).ent = 1;
+			exec_NODE(egt(-4).v.n, 32, ret);
+			if (egt(-1).v.ent == 1 ||
+			    egt(-3).v.n->type == X_NULL ||
+			    egt(-3).v.n->v.v.ent == ret.v.ent) {
 
-				/* c'est ficni si on a recu un break; */
-				if (ret != NULL)
+				/* execute instrictions */
+				exec_NODE(egt(-2).v.n, 33, ret);
+
+				/* already matched = 1 */
+				egt(-1).v.ent = 1;
+
+				/* c'est fini si on a recu un break; */
+				if (ret.v.ent != 0)
 					break;
 			}
 		}
@@ -472,32 +480,32 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(4);
 
-		egt(-4).n = container_of(egt(-5).n->c.next, struct exec_node, b);
-		egt(-3).n = container_of(egt(-4).n->b.next, struct exec_node, b);
-		egt(-2).n = container_of(egt(-3).n->b.next, struct exec_node, b);
-		egt(-1).n = container_of(egt(-2).n->b.next, struct exec_node, b);
+		egt(-4).v.n = container_of(egt(-5).v.n->c.next, struct exec_node, b);
+		egt(-3).v.n = container_of(egt(-4).v.n->b.next, struct exec_node, b);
+		egt(-2).v.n = container_of(egt(-3).v.n->b.next, struct exec_node, b);
+		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
 
 		/* init */
-		exec_NODE(egt(-4).n, 34, ret);
+		exec_NODE(egt(-4).v.n, 34, ret);
 
 		while (1) {
 		
 			/* cond */
-			exec_NODE(egt(-3).n, 35, ret);
-			if (ret == 0)
+			exec_NODE(egt(-3).v.n, 35, ret);
+			if (ret.v.ent == 0)
 				break;
 
 			/* exec */
-			exec_NODE(egt(-1).n, 36, ret);
+			exec_NODE(egt(-1).v.n, 36, ret);
 
 			/* check break */
-			if ((long)ret == -1)
+			if (ret.v.ent == -1)
 				break;
 
 			/* implicit continue */
 
 			/* next */
-			exec_NODE(egt(-2).n, 37, ret);
+			exec_NODE(egt(-2).v.n, 37, ret);
 		}
 
 		exec_free_stack(4);
@@ -517,21 +525,21 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(2);
 
-		egt(-2).n = container_of(egt(-3).n->c.next, struct exec_node, b);
-		egt(-1).n = container_of(egt(-2).n->b.next, struct exec_node, b);
+		egt(-2).v.n = container_of(egt(-3).v.n->c.next, struct exec_node, b);
+		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
 
 		while(1) {
 		
 			/* test condition */
-			exec_NODE(egt(-2).n, 38, ret);
-			if (ret == NULL)
+			exec_NODE(egt(-2).v.n, 38, ret);
+			if (ret.v.ent == 0)
 				break;
 
 			/* exec code */
-			exec_NODE(egt(-1).n, 39, ret);
+			exec_NODE(egt(-1).v.n, 39, ret);
 
 			/* check break */
-			if ((long)ret == -1)
+			if (ret.v.ent == -1)
 				break;
 
 			/* implicit continue */
@@ -555,20 +563,24 @@ int exec_run_now(struct exec_run *r) {
 		 */
 		exec_reserve_stack(3);
 
-		egt(-3).n = container_of(egt(-4).n->c.next, struct exec_node, b);
-		egt(-2).n = container_of(egt(-3).n->b.next, struct exec_node, b);
-		egt(-1).n = container_of(egt(-2).n->b.next, struct exec_node, b);
+		// TODO: deux variables suffisent ... on n'exucute pas le true et le false en meme temps !
+		egt(-3).v.n = container_of(egt(-4).v.n->c.next, struct exec_node, b);
+		egt(-2).v.n = container_of(egt(-3).v.n->b.next, struct exec_node, b);
+		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
 
-		exec_NODE(egt(-3).n, 40, ret);
+		exec_NODE(egt(-3).v.n, 40, ret);
 
-		if (ret != NULL)
-			exec_NODE(egt(-2).n, 41, egt(-4).ptr);
+		/* check true */
+		if (ret.v.ent != 0)
+			exec_NODE(egt(-2).v.n, 41, egt(-4));
 
-		else if (&egt(-1).n->b != &egt(-4).n->c)
-			exec_NODE(egt(-1).n, 42, egt(-4).ptr);
+		/* if false and else block is present */
+		else if (&egt(-1).v.n->b != &egt(-4).v.n->c)
+			exec_NODE(egt(-1).v.n, 42, egt(-4));
 
+		/* if false */
 		else
-			egt(-4).ptr = NULL;
+			egt(-4).v.ent = 0;
 
 		exec_free_stack(3);
 		exec_return();
@@ -582,17 +594,17 @@ int exec_run_now(struct exec_run *r) {
 *
 **********************************************************************/
 	exec_function(X_VAR) {
-		egt(-1).ptr = r->vars[egt(-1).n->v.var->offset].ptr;
+		memcpy(&egt(-1), &r->vars[egt(-1).v.n->v.v.var->offset], sizeof(egt(-1)));
 		exec_return();
 	} end_function
 
 /**********************************************************************
- 
+*
 * X_INTEGER
 *
 **********************************************************************/
 	exec_function(X_INTEGER) {
-		egt(-1).ptr = egt(-1).n->v.ptr;
+		egt(-1).v.ent = egt(-1).v.n->v.v.ent;
 		exec_return();
 	} end_function
 
@@ -602,7 +614,7 @@ int exec_run_now(struct exec_run *r) {
 *
 **********************************************************************/
 	exec_function(X_STRING) {
-		egt(-1).ptr = egt(-1).n->v.ptr;
+		memcpy(&egt(-1), &egt(-1).v.n->v, sizeof(egt(-1)));
 		exec_return();
 	} end_function
 

@@ -187,12 +187,12 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 			        &n->c, n->c.next, n->c.prev,
 			        &n->b, n->b.next, n->b.prev,
 			        exec_cmd2str[n->type],
-			        ((struct exec_funcs *)n->v.ptr)->name,
-			        ((struct exec_funcs *)n->v.ptr)->f);
+			        ((struct exec_funcs *)n->v.v.ptr)->name,
+			        ((struct exec_funcs *)n->v.v.ptr)->f);
 		else
 			fprintf(fd, "\t\"%p\" [ label=\"{%s|%s(%p)}\" ]\n",
-			        n, exec_cmd2str[n->type], ((struct exec_funcs *)n->v.ptr)->name,
-			        ((struct exec_funcs *)n->v.ptr)->f);
+			        n, exec_cmd2str[n->type], ((struct exec_funcs *)n->v.v.ptr)->name,
+			        ((struct exec_funcs *)n->v.v.ptr)->f);
 		break;
 
 	case X_VAR:
@@ -202,10 +202,10 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 			        n, n, n->p,
 			        &n->c, n->c.next, n->c.prev,
 			        &n->b, n->b.next, n->b.prev,
-			        exec_cmd2str[n->type], n->v.var->name, n->v.var->offset);
+			        exec_cmd2str[n->type], n->v.v.var->name, n->v.v.var->offset);
 		else
 			fprintf(fd, "\t\"%p\" [ label=\"{%s|%s (%d)}\" ]\n",
-			        n, exec_cmd2str[n->type], n->v.var->name, n->v.var->offset);
+			        n, exec_cmd2str[n->type], n->v.v.var->name, n->v.v.var->offset);
 		break;
 
 	case X_INTEGER:
@@ -215,15 +215,15 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 			        n, n, n->p,
 			        &n->c, n->c.next, n->c.prev,
 			        &n->b, n->b.next, n->b.prev,
-			        exec_cmd2str[n->type], n->v.integer);
+			        exec_cmd2str[n->type], n->v.v.ent);
 		else
 			fprintf(fd, "\t\"%p\" [ label=\"{%s|%d}\" ]\n",
-			       n, exec_cmd2str[n->type], n->v.integer);
+			       n, exec_cmd2str[n->type], n->v.v.ent);
 		break;
 
 	case X_PRINT:
 	case X_STRING:
-		c = replace_n(e, n->v.string);
+		c = replace_n(e, n->v.v.str);
 		if (c == NULL)
 			return -1;
 		if (display_ptr == 1)
@@ -245,10 +245,10 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 			        n, n, n->p,
 			        &n->c, n->c.next, n->c.prev,
 			        &n->b, n->b.next, n->b.prev,
-			        n->type, n->v.ptr);
+			        n->type, n->v.v.ptr);
 		else
 			fprintf(fd, "\t\"%p\" [ label=\"{Error: Unknown node (code %d)|%p}\" ]\n",
-			        n, n->type, n->v.ptr);
+			        n, n->type, n->v.v.ptr);
 		break;
 
 	}
