@@ -305,20 +305,20 @@ int exec_run_now(struct exec_run *r) {
 		exec_NODE(egt(-1).v.n, 5, egt(-1));
 
 		switch (egt(-3).v.n->type) {
-		case X_ADD:   egt(-3).v.ent = egt(-2).v.ent  + egt(-1).v.ent;       break;
-		case X_SUB:   egt(-3).v.ent = egt(-2).v.ent  - egt(-1).v.ent;       break;
-		case X_MUL:   egt(-3).v.ent = egt(-2).v.ent  * egt(-1).v.ent;       break;
-		case X_DIV:   egt(-3).v.ent = egt(-2).v.ent  / egt(-1).v.ent;       break;
-		case X_MOD:   egt(-3).v.ent = egt(-2).v.ent  % egt(-1).v.ent;       break;
-		case X_EQUAL: egt(-3).v.ent = egt(-2).v.ent == egt(-1).v.ent;       break;
-		case X_STREQ: egt(-3).v.ent = strcmp(egt(-2).v.str, egt(-1).v.str); break;
-		case X_DIFF:  egt(-3).v.ent = egt(-2).v.ent != egt(-1).v.ent;       break;
-		case X_LT:    egt(-3).v.ent = egt(-2).v.ent  < egt(-1).v.ent;       break;
-		case X_GT:    egt(-3).v.ent = egt(-2).v.ent  > egt(-1).v.ent;       break;
-		case X_LE:    egt(-3).v.ent = egt(-2).v.ent <= egt(-1).v.ent;       break;
-		case X_GE:    egt(-3).v.ent = egt(-2).v.ent >= egt(-1).v.ent;       break;
-		case X_AND:   egt(-3).v.ent = egt(-2).v.ent && egt(-1).v.ent;       break;
-		case X_OR:    egt(-3).v.ent = egt(-2).v.ent || egt(-1).v.ent;       break;
+		case X_ADD:   egt(-3).v.ent = egt(-2).v.ent  + egt(-1).v.ent;            break;
+		case X_SUB:   egt(-3).v.ent = egt(-2).v.ent  - egt(-1).v.ent;            break;
+		case X_MUL:   egt(-3).v.ent = egt(-2).v.ent  * egt(-1).v.ent;            break;
+		case X_DIV:   egt(-3).v.ent = egt(-2).v.ent  / egt(-1).v.ent;            break;
+		case X_MOD:   egt(-3).v.ent = egt(-2).v.ent  % egt(-1).v.ent;            break;
+		case X_EQUAL: egt(-3).v.ent = egt(-2).v.ent == egt(-1).v.ent;            break;
+		case X_STREQ: egt(-3).v.ent = strcmp(egt(-2).v.str, egt(-1).v.str) == 0; break;
+		case X_DIFF:  egt(-3).v.ent = egt(-2).v.ent != egt(-1).v.ent;            break;
+		case X_LT:    egt(-3).v.ent = egt(-2).v.ent  < egt(-1).v.ent;            break;
+		case X_GT:    egt(-3).v.ent = egt(-2).v.ent  > egt(-1).v.ent;            break;
+		case X_LE:    egt(-3).v.ent = egt(-2).v.ent <= egt(-1).v.ent;            break;
+		case X_GE:    egt(-3).v.ent = egt(-2).v.ent >= egt(-1).v.ent;            break;
+		case X_AND:   egt(-3).v.ent = egt(-2).v.ent && egt(-1).v.ent;            break;
+		case X_OR:    egt(-3).v.ent = egt(-2).v.ent || egt(-1).v.ent;            break;
 		/* just for warnings ! */
 		case X_NULL:
 		case X_COLLEC:
