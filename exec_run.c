@@ -159,6 +159,18 @@ int exec_run_now(struct exec_run *r) {
 		/* execute children */
 		exec_NODE(egt(-4).v.n, 2, egt(-3));
 
+		if (egt(-3).type == XT_INTEGER) {
+			char convert[128];
+			egt(-3).len = snprintf(convert, 128, "%d", egt(-3).v.ent);
+			egt(-3).v.str = strdup(convert);
+			if (egt(-3).v.str == NULL) {
+				snprintf(r->error, ERROR_LEN, "[%s:%d] strdup(\"%s\"): %s",
+				         __FILE__, __LINE__, convert, strerror(errno));
+				return -1;
+			}
+			egt(-3).freeit = 1;
+		}
+
 		egt(-1).v.ent = egt(-3).len;
 		egt(-2).v.ent = egt(-1).v.ent;
 	
