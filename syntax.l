@@ -217,7 +217,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 			return FUNCTION;
 		}
 	
-	(" "|"\t"|"\n") { }
+	(" "|"\t"|"\n"|"\r") { }
 	.          {
 			seterror("line %d: '%s' unexpected character", yylineno, yytext);
 			return YYPARSE_ABORT;
