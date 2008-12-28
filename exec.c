@@ -30,7 +30,7 @@ struct exec_run *exec_new_run(struct exec *e) {
 	}
 
 	/* memory for vars */
-	r->vars = malloc(sizeof(r->vars) * e->nbvars);
+	r->vars = malloc(sizeof(*r->vars) * e->nbvars);
 	if (r->vars == NULL) {
 		free(r);
 		return NULL;
