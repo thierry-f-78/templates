@@ -50,7 +50,11 @@ hex             0x[0-9a-fA-F]+
 str             \"[^\"]*\"
 block           "%>"([^<]|<[^\%])"<%"
 
+%x COMMENT
+
 %%
+
+<INITIAL>{
 
 "%>"([^<]|<[^%])*"<%" {
 		struct yyargs_t *extra = yyget_extra(yyscanner);
@@ -60,6 +64,8 @@ block           "%>"([^<]|<[^\%])"<%"
 		my_exec_new(X_PRINT, blockdup);
 		return PRINT; 
 	}
+
+"/*"       BEGIN(COMMENT);
 
 "{"        { return OPENBLOCK; }
 "}"        { return CLOSEBLOCK; }
@@ -151,7 +157,13 @@ block           "%>"([^<]|<[^\%])"<%"
 		seterror("line %d: '%s' unexpected character", yylineno, yytext);
 		return YYPARSE_ABORT;
 	}
+}
 
+<COMMENT>{
+"*/"       BEGIN(INITIAL);
+.          { }
+\n         { }
+}
 %%
 
 /* just for removing this warning:
