@@ -10,6 +10,9 @@
 /* flex count lines */
 %option yylineno
 
+/* use stack for recording context parsing */
+%option stack
+
 %{
 #include <stdlib.h>
 #include <stdio.h>
@@ -40,6 +43,28 @@
 			return YYPARSE_ABORT; \
 	} while(0);
 
+/* this add char into current print space */
+#define ADDCHARBLOCK 1024
+#define add_char(__cc) \
+	do { \
+		/* new block ? */ \
+		if (extra->printsize == extra->printblock) { \
+			char *tmp; \
+			extra->printblock += ADDCHARBLOCK; \
+			tmp = realloc(extra->print, extra->printblock); \
+			if (tmp == NULL) { \
+				free(extra->print); \
+				extra->print = NULL; \
+				seterror("realloc(%p, %d): %s", extra->print, \
+				         extra->printblock, strerror(errno)); \
+				return YYPARSE_ABORT; \
+			} \
+			extra->print = tmp; \
+		} \
+		extra->print[extra->printsize] = __cc; \
+		extra->printsize++; \
+	} while(0);
+
 %}
 
 space           [ \t]+
@@ -48,121 +73,155 @@ var             $[a-zA-Z][a-zA-Z0-9]*
 num             -?[0-9]+
 hex             0x[0-9a-fA-F]+
 str             \"[^\"]*\"
-block           "%>"([^<]|<[^\%])"<%"
 
-%x COMMENT
+%x COMMENT LANGUAGE
 
 %%
 
 <INITIAL>{
 
-"%>"([^<]|<[^%])*"<%" {
-		struct yyargs_t *extra = yyget_extra(yyscanner);
-		char *blockdup = exec_blockdup(extra->e, yytext);
-		if (blockdup == NULL)
-			return YYPARSE_ABORT;
-		my_exec_new(X_PRINT, blockdup);
-		return PRINT; 
+	<<EOF>>    {
+			struct yyargs_t *extra = yyget_extra(yyscanner);
+			if (extra->printsize != 0) {
+				char *blockdup;
+				add_char('\0');
+				blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
+				if (blockdup == NULL)
+					return YYPARSE_ABORT;
+				my_exec_new(X_PRINT, blockdup);
+				extra->printsize = 0;
+				yy_push_state(LANGUAGE, yyscanner);
+				return PRINT; 
+			}
 	}
 
-"/*"       BEGIN(COMMENT);
+	"<%"       { 
+			struct yyargs_t *extra = yyget_extra(yyscanner);
+			yy_push_state(LANGUAGE, yyscanner);
+			if (extra->printsize != 0) {
+				char *blockdup;
+				add_char('\0');
+				blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
+				if (blockdup == NULL)
+					return YYPARSE_ABORT;
+				my_exec_new(X_PRINT, blockdup);
+				extra->printsize = 0;
+				return PRINT; 
+			}
+		} BEGIN(LANGUAGE);
 
-"{"        { return OPENBLOCK; }
-"}"        { return CLOSEBLOCK; }
+	(\n|.)     {
+			struct yyargs_t *extra = yyget_extra(yyscanner);
+			add_char(yytext[0]);
+		}
 
-"("        { return OPENPAR; }
-")"        { return CLOSEPAR; }
+}
 
-","        { return COMMA; }
-";"        { return SEP; }
-":"        { return COLON; }
+<LANGUAGE>{
 
-"for"      { my_exec_new(X_FOR, NULL); return FOR; }
-"while"    { my_exec_new(X_WHILE, NULL); return WHILE; }
-"if"       { my_exec_new(X_IF, NULL); return IF; }
-"else"     { return ELSE; }
-"break"    { my_exec_new(X_BREAK, NULL); return BREAK; }
-"continue" { my_exec_new(X_CONT, NULL); return CONT; }
-"switch"   { my_exec_new(X_SWITCH, NULL); return SWITCH; }
-"case"     { return CASE; }
-"default"  { return DEFAULT; }
+	"/*"       { yy_push_state(COMMENT, yyscanner); } BEGIN(COMMENT);
+	"%>"       { yy_pop_state(yyscanner);           } BEGIN(INITIAL);
 
-"="        { my_exec_new(X_ASSIGN, NULL); return ASSIGN; }
-"+"        { my_exec_new(X_ADD, NULL); return ADD; }
-"-"        { my_exec_new(X_SUB, NULL); return SUB; }
-"*"        { my_exec_new(X_MUL, NULL); return MUL; }
-"/"        { my_exec_new(X_DIV, NULL); return DIV; }
-"%"        { my_exec_new(X_MOD, NULL); return MOD; }
+	"{"        { return OPENBLOCK; }
+	"}"        { return CLOSEBLOCK; }
+	
+	"("        { return OPENPAR; }
+	")"        { return CLOSEPAR; }
+	
+	","        { return COMMA; }
+	";"        { return SEP; }
+	":"        { return COLON; }
+	
+	"for"      { my_exec_new(X_FOR, NULL); return FOR; }
+	"while"    { my_exec_new(X_WHILE, NULL); return WHILE; }
+	"if"       { my_exec_new(X_IF, NULL); return IF; }
+	"else"     { return ELSE; }
+	"break"    { my_exec_new(X_BREAK, NULL); return BREAK; }
+	"continue" { my_exec_new(X_CONT, NULL); return CONT; }
+	"switch"   { my_exec_new(X_SWITCH, NULL); return SWITCH; }
+	"case"     { return CASE; }
+	"default"  { return DEFAULT; }
+	
+	"="        { my_exec_new(X_ASSIGN, NULL); return ASSIGN; }
+	"+"        { my_exec_new(X_ADD, NULL); return ADD; }
+	"-"        { my_exec_new(X_SUB, NULL); return SUB; }
+	"*"        { my_exec_new(X_MUL, NULL); return MUL; }
+	"/"        { my_exec_new(X_DIV, NULL); return DIV; }
+	"%"        { my_exec_new(X_MOD, NULL); return MOD; }
+	
+	"=="       { my_exec_new(X_EQUAL, NULL); return EQUAL; }
+	"==="      { my_exec_new(X_STREQ, NULL); return STREQ; }
+	"!="       { my_exec_new(X_DIFF, NULL); return DIFF; }
+	"&&"       { my_exec_new(X_AND, NULL); return AND; }
+	"||"       { my_exec_new(X_OR, NULL); return OR; }
+	"<"        { my_exec_new(X_LT, NULL); return LT; }
+	">"        { my_exec_new(X_GT, NULL); return GT; }
+	">="       { my_exec_new(X_GE, NULL); return GE; }
+	"<="       { my_exec_new(X_LE, NULL); return LE; }
+	
+	"display"  { my_exec_new(X_DISPLAY, NULL); return DISPLAY; }
+	
+	{str}      {
+			char *val;
+			struct yyargs_t *extra = yyget_extra(yyscanner);
+			val = exec_strdup(extra->e, yytext);
+			if (val == NULL)
+				return YYPARSE_ABORT;
+			my_exec_new(X_STRING, val);
+			return STR;
+		}
 
-"=="       { my_exec_new(X_EQUAL, NULL); return EQUAL; }
-"==="      { my_exec_new(X_STREQ, NULL); return STREQ; }
-"!="       { my_exec_new(X_DIFF, NULL); return DIFF; }
-"&&"       { my_exec_new(X_AND, NULL); return AND; }
-"||"       { my_exec_new(X_OR, NULL); return OR; }
-"<"        { my_exec_new(X_LT, NULL); return LT; }
-">"        { my_exec_new(X_GT, NULL); return GT; }
-">="       { my_exec_new(X_GE, NULL); return GE; }
-"<="       { my_exec_new(X_LE, NULL); return LE; }
+	"NULL"     {
+			my_exec_new(X_INTEGER, 0);
+			return NUM;
+		}
 
-"display"  { my_exec_new(X_DISPLAY, NULL); return DISPLAY; }
+	({num}|{hex}) {
+			long val;
+			char *error;
+			val = strtol(yytext, &error, 0);
+			if (*error != '\0') {
+				seterror("line %d: '%s' not a number", yylineno, yytext);
+				return YYPARSE_ABORT;
+			}
+			my_exec_new(X_INTEGER, (void *)val);
+			return NUM;
+		}
 
-{str}      {
-		char *val;
-		struct yyargs_t *extra = yyget_extra(yyscanner);
-		val = exec_strdup(extra->e, yytext);
-		if (val == NULL)
-			return YYPARSE_ABORT;
-		my_exec_new(X_STRING, val);
-		return STR;
-	}
-"NULL"     {
-		my_exec_new(X_INTEGER, 0);
-		return NUM;
-	}
-({num}|{hex}) {
-		long val;
-		char *error;
-		val = strtol(yytext, &error, 0);
-		if (*error != '\0') {
-			seterror("line %d: '%s' not a number", yylineno, yytext);
+	{var}      {
+			struct exec_vars *val;
+			struct yyargs_t *arg = yyget_extra(yyscanner);
+			val = exec_var(arg->e, yytext);
+			if (val == NULL)
+				return YYPARSE_ABORT;
+			my_exec_new(X_VAR, val);
+			return VAR;
+		}
+
+	{function} {
+			struct exec_funcs *val;
+			struct yyargs_t *arg = yyget_extra(yyscanner);
+			val = exec_func(arg->e, yytext);
+			if (val == NULL) {
+				seterror("line %d: '%s' function not found", yylineno, yytext);
+				return YYPARSE_ABORT;
+			}
+			my_exec_new(X_FUNCTION, val);
+			return FUNCTION;
+		}
+	
+	{space}    { }
+	"\n"       { }
+	.          {
+			seterror("line %d: '%s' unexpected character", yylineno, yytext);
 			return YYPARSE_ABORT;
 		}
-		my_exec_new(X_INTEGER, (void *)val);
-		return NUM;
-	}
-{var}      {
-		struct exec_vars *val;
-		struct yyargs_t *arg = yyget_extra(yyscanner);
-		val = exec_var(arg->e, yytext);
-		if (val == NULL)
-			return YYPARSE_ABORT;
-		my_exec_new(X_VAR, val);
-		return VAR;
-	}
-{function} {
-		struct exec_funcs *val;
-		struct yyargs_t *arg = yyget_extra(yyscanner);
-		val = exec_func(arg->e, yytext);
-		if (val == NULL) {
-			seterror("line %d: '%s' function not found", yylineno, yytext);
-			return YYPARSE_ABORT;
-		}
-		my_exec_new(X_FUNCTION, val);
-		return FUNCTION;
-	}
-
-{space}    { }
-"\n"       { }
-.          {
-		seterror("line %d: '%s' unexpected character", yylineno, yytext);
-		return YYPARSE_ABORT;
-	}
 }
 
 <COMMENT>{
-"*/"       BEGIN(INITIAL);
-.          { }
-\n         { }
+	"*/"       { yy_pop_state(yyscanner); } BEGIN(LANGUAGE);
+	.          { }
+	\n         { }
 }
 %%
 
@@ -171,4 +230,5 @@ syntax.c:1259: warning: 'yyunput' defined but not used
 */
 static inline void ________stupid_function_never_called(void) {
 	yyunput('c', NULL, 0);
+	yy_top_state(NULL);
 }

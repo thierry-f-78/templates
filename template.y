@@ -419,6 +419,9 @@ int exec_parse(struct exec *e, char *file) {
 	INIT_LIST_HEAD(&(yyargs.stack[yyargs.stack_idx]));
 	yyargs.scanner = scanner;
 	yyargs.e = e;
+	yyargs.print = NULL;
+	yyargs.printsize = 0;
+	yyargs.printblock = 0;
 	e->error[0] = '\0';
 
 	/* execute parsing */

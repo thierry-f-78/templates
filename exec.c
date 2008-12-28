@@ -66,14 +66,10 @@ struct exec_node *exec_new(struct exec *e, enum exec_type type, void *value, int
 	return n;
 }
 
-char *exec_blockdup(struct exec *e, char *str) {
+char *exec_blockdup(struct exec *e, char *str, int len) {
 	char *out;
-	int len;
 
-	str += 2; /* supprime %> */
-	len = strlen(str) - 2; /* supprime <% */
-
-	out = malloc(len + 1);
+	out = malloc(len);
 	if (out == NULL) {
 		snprintf(e->error, ERROR_LEN, "malloc(%d): %s\n", len + 1, strerror(errno));
 		return NULL;
