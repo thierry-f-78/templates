@@ -67,7 +67,6 @@
 
 %}
 
-space           [ \t]+
 function        [a-zA-Z][a-zA-Z0-9_]*
 var             $[a-zA-Z][a-zA-Z0-9]*
 num             -?[0-9]+
@@ -210,8 +209,7 @@ str             \"[^\"]*\"
 			return FUNCTION;
 		}
 	
-	{space}    { }
-	"\n"       { }
+	(" "|"\t"|"\n") { }
 	.          {
 			seterror("line %d: '%s' unexpected character", yylineno, yytext);
 			return YYPARSE_ABORT;
