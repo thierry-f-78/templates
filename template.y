@@ -90,6 +90,7 @@ int yyerror(struct yyargs_t *args, char *str) {
 %token COMMA
 %token ASSIGN
 %token COLON
+%token ENDTAG
 
 /* operators */
 %token ADD
@@ -136,7 +137,8 @@ Input:
 	;
 
 InputElement:
-	PRINT               { list_add_tail(&$1->b, stack_cur); }
+	ENDTAG
+	| PRINT             { list_add_tail(&$1->b, stack_cur); }
 	| BREAK SEP         { list_add_tail(&$1->b, stack_cur); }
 	| CONT SEP          { list_add_tail(&$1->b, stack_cur); }
 	| Expression SEP    { list_add_tail(&$1->b, stack_cur); }
@@ -144,6 +146,7 @@ InputElement:
 	| While             { list_add_tail(&$1->b, stack_cur); }
 	| If                { list_add_tail(&$1->b, stack_cur); }
 	| Switch            { list_add_tail(&$1->b, stack_cur); }
+	| FastDisplay       { list_add_tail(&$1->b, stack_cur); }
 	;
 
 While:
@@ -357,6 +360,15 @@ Value:
 	| Display  { $$ = $1; }
 	;
 
+FastDisplay:
+	ASSIGN DisplayArg ENDTAG
+		{
+			list_add_tail(&$2->b, &$1->c);
+			$1->type = X_DISPLAY;
+			$$ = $1;
+		}
+	;
+		
 Display:
 	DISPLAY OPENPAR DisplayArg CLOSEPAR
 		{

@@ -135,9 +135,9 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 
 <LANGUAGE>{
 
-	"/*"       { yy_push_state(COMMENT, yyscanner); } BEGIN(COMMENT);
-	"%>"       { yy_pop_state(yyscanner);           } BEGIN(INITIAL);
-	"\""       { yy_push_state(STRING, yyscanner);  } BEGIN(STRING);
+	"/*"       { yy_push_state(COMMENT, yyscanner);      } BEGIN(COMMENT);
+	"%>"       { yy_pop_state(yyscanner); return ENDTAG; } BEGIN(INITIAL);
+	"\""       { yy_push_state(STRING, yyscanner);       } BEGIN(STRING);
 
 	"{"        { return OPENBLOCK; }
 	"}"        { return CLOSEBLOCK; }
@@ -218,6 +218,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 		}
 	
 	(" "|"\t"|"\n"|"\r") { }
+
 	.          {
 			seterror("line %d: '%s' unexpected character", yylineno, yytext);
 			return YYPARSE_ABORT;
