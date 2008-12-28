@@ -81,25 +81,6 @@ char *exec_blockdup(struct exec *e, char *str, int len) {
 	return out;
 }
 
-char *exec_strdup(struct exec *e, char *str) {
-	char *out;
-	int len;
-
-	str += 1; /* supprime " */
-	len = strlen(str) - 1; /* supprime " */
-
-	out = malloc(len + 1);
-	if (out == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%d): %s\n", len + 1, strerror(errno));
-		return NULL;
-	}
-
-	memcpy(out, str, len);
-	out[len] = '\0';
-
-	return out;
-}
-
 struct exec_vars *exec_var(struct exec *e, char *str) {
 	struct exec_vars *v;
 

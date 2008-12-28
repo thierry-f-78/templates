@@ -65,22 +65,39 @@
 		extra->printsize++; \
 	} while(0);
 
+/* this get extra variable */
+#define get_extra struct yyargs_t *extra = yyget_extra(yyscanner)
+
+/* this convert hexa char into decimal */
+#define hex_conv(__cc, __dest) \
+	do { \
+		__dest = __cc; \
+		if (__dest >= 'a' && __dest <= 'f') __dest = __dest - 'a' + 0xa; \
+		else if (__dest >= 'A' && __dest <= 'F') __dest = __dest - 'A' + 0xa; \
+		else if (__dest >= '0' && __dest <= '9') __dest = __dest - '0'; \
+		else { \
+			seterror("'%c' is not hexa", __dest); \
+			return YYPARSE_ABORT; \
+		} \
+	} while (0);
+
 %}
 
 function        [a-zA-Z][a-zA-Z0-9_]*
 var             $[a-zA-Z][a-zA-Z0-9]*
 num             -?[0-9]+
 hex             0x[0-9a-fA-F]+
-str             \"[^\"]*\"
+soctal          \\[0-7][0-7][0-7]
+shex            \\x[0-9a-fA-F][0-9a-fA-F] 
 
-%x COMMENT LANGUAGE
+%x COMMENT LANGUAGE STRING
 
 %%
 
 <INITIAL>{
 
 	<<EOF>>    {
-			struct yyargs_t *extra = yyget_extra(yyscanner);
+			get_extra;
 			if (extra->printsize != 0) {
 				char *blockdup;
 				add_char('\0');
@@ -95,7 +112,7 @@ str             \"[^\"]*\"
 	}
 
 	"<%"       { 
-			struct yyargs_t *extra = yyget_extra(yyscanner);
+			get_extra;
 			yy_push_state(LANGUAGE, yyscanner);
 			if (extra->printsize != 0) {
 				char *blockdup;
@@ -110,7 +127,7 @@ str             \"[^\"]*\"
 		} BEGIN(LANGUAGE);
 
 	(\n|.)     {
-			struct yyargs_t *extra = yyget_extra(yyscanner);
+			get_extra;
 			add_char(yytext[0]);
 		}
 
@@ -120,6 +137,7 @@ str             \"[^\"]*\"
 
 	"/*"       { yy_push_state(COMMENT, yyscanner); } BEGIN(COMMENT);
 	"%>"       { yy_pop_state(yyscanner);           } BEGIN(INITIAL);
+	"\""       { yy_push_state(STRING, yyscanner);  } BEGIN(STRING);
 
 	"{"        { return OPENBLOCK; }
 	"}"        { return CLOSEBLOCK; }
@@ -160,16 +178,6 @@ str             \"[^\"]*\"
 	
 	"display"  { my_exec_new(X_DISPLAY, NULL); return DISPLAY; }
 	
-	{str}      {
-			char *val;
-			struct yyargs_t *extra = yyget_extra(yyscanner);
-			val = exec_strdup(extra->e, yytext);
-			if (val == NULL)
-				return YYPARSE_ABORT;
-			my_exec_new(X_STRING, val);
-			return STR;
-		}
-
 	"NULL"     {
 			my_exec_new(X_INTEGER, 0);
 			return NUM;
@@ -213,6 +221,58 @@ str             \"[^\"]*\"
 	.          {
 			seterror("line %d: '%s' unexpected character", yylineno, yytext);
 			return YYPARSE_ABORT;
+		}
+}
+
+<STRING>{
+
+	{soctal}   {
+			get_extra;
+			add_char(
+				((yytext[1] - '0') * 64 ) +
+				((yytext[2] - '0') * 8  ) +
+				((yytext[3] - '0') * 1  )
+			);
+		}
+
+	{shex}     {
+			char a, b;
+			get_extra;
+			hex_conv(yytext[2], a);
+			hex_conv(yytext[3], b);
+			add_char(a * 16 + b );
+		}
+
+	"\\n"      { get_extra; add_char('\n'); }
+	"\\t"      { get_extra; add_char('\t'); }
+	"\\e"      { get_extra; add_char('\e'); }
+	"\\r"      { get_extra; add_char('\r'); }
+	"\\\""     { get_extra; add_char('"');  }
+	"\\\\"     { get_extra; add_char('\\'); }
+	"\\a"      { get_extra; add_char('\a'); }
+	"\\b"      { get_extra; add_char('\b'); }
+	"\\v"      { get_extra; add_char('\v'); }
+	"\\f"      { get_extra; add_char('\f'); }
+	"\\'"      { get_extra; add_char('\''); }
+	"\\?"      { get_extra; add_char('\?'); }
+	"\\0"      { get_extra; add_char('\0'); }
+
+	"\""       {
+			get_extra;
+			char *blockdup;
+			yy_pop_state(yyscanner);
+			add_char('\0');
+			blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
+			if (blockdup == NULL)
+				return YYPARSE_ABORT;
+			my_exec_new(X_STRING, blockdup);
+			extra->printsize = 0;
+			return STR; 
+		} BEGIN(LANGUAGE);
+
+	.          { 
+			get_extra;
+			add_char(yytext[0]);
 		}
 }
 
