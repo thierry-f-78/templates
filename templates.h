@@ -212,6 +212,9 @@ struct exec_run *exec_new_run(struct exec *e);
  */
 struct exec_vars *exec_get_var(struct exec *e, char *str);
 
+/* for the static inline variable effectation funcs */
+#define reqvar (r->vars[v->offset])
+
 /**
  * set variable integer value
  * @param r is run program id
@@ -220,10 +223,10 @@ struct exec_vars *exec_get_var(struct exec *e, char *str);
  */
 static inline
 void exec_set_var_int(struct exec_run *r, struct exec_vars *v, int val) {
-	if (r->vars[v->offset].freeit == 1)
-		free(r->vars[v->offset].v.str);
-	r->vars[v->offset].v.ent = val;
-	r->vars[v->offset].type = XT_INTEGER;
+	if (reqvar.freeit == 1)
+		free(reqvar.v.str);
+	reqvar.v.ent = val;
+	reqvar.type = XT_INTEGER;
 }
 
 /**
@@ -235,13 +238,13 @@ void exec_set_var_int(struct exec_run *r, struct exec_vars *v, int val) {
  */
 static inline
 void exec_set_var_str(struct exec_run *r, struct exec_vars *v,
-                      char *val, int free) {
-	if (r->vars[v->offset].freeit == 1)
-		free(r->vars[v->offset].v.str);
-	r->vars[v->offset].v.str = val;
-	r->vars[v->offset].len = strlen(val);
-	r->vars[v->offset].type = XT_STRING;
-	r->vars[v->offset].freeit = free;
+                      char *val, int freeit) {
+	if (reqvar.freeit == 1)
+		free(reqvar.v.str);
+	reqvar.v.str = val;
+	reqvar.len = strlen(val);
+	reqvar.type = XT_STRING;
+	reqvar.freeit = freeit;
 }
 
 /**
@@ -254,13 +257,13 @@ void exec_set_var_str(struct exec_run *r, struct exec_vars *v,
  */
 static inline
 void exec_set_var_block(struct exec_run *r, struct exec_vars *v,
-                      char *val, int len, int free) {
-	if (r->vars[v->offset].freeit == 1)
-		free(r->vars[v->offset].v.str);
-	r->vars[v->offset].v.str = val;
-	r->vars[v->offset].len = len;
-	r->vars[v->offset].type = XT_STRING;
-	r->vars[v->offset].freeit = free;
+                      char *val, int len, int freeit) {
+	if (reqvar.freeit == 1)
+		free(reqvar.v.str);
+	reqvar.v.str = val;
+	reqvar.len = len;
+	reqvar.type = XT_STRING;
+	reqvar.freeit = freeit;
 }
 
 /**
