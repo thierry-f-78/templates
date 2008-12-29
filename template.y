@@ -57,6 +57,39 @@ int yyerror(struct yyargs_t *args, char *str) {
 	return 0; 
 }
 
+/* this create new node, check return value and return error if needed */
+#define my_exec_new_nul(_var, _action, _line) \
+	do { \
+		_var = exec_new(args->e, _action, _line); \
+		if (_var == NULL) \
+			YYABORT; \
+	} while(0);
+
+/* this create new str node, check return value and return error if needed */
+#define my_exec_new_str(_var, _action, _argument, _len, _line) \
+	do { \
+		_var = exec_new_str(args->e, _action, _argument, _len, _line); \
+		if (_var == NULL) \
+			YYABORT; \
+	} while(0);
+
+/* this create new int node, check return value and return error if needed */
+#define my_exec_new_ent(_var, _action, _value, _line) \
+	do { \
+		_var = exec_new_ent(args->e, _action, _value, _line); \
+		if (_var == NULL) \
+			YYABORT; \
+	} while(0);
+
+/* this create new ptr node, check return value and return error if needed */
+#define my_exec_new_ptr(_var, _action, _value, _line) \
+	do { \
+		_var = exec_new_ptr(args->e, _action, _value, _line); \
+		if (_var == NULL) \
+			YYABORT; \
+	} while(0);
+
+
 %}
 
 %token PRINT
@@ -89,6 +122,8 @@ int yyerror(struct yyargs_t *args, char *str) {
 %token SEP
 %token COMMA
 %token ASSIGN
+%token ASSIGNPP
+%token ASSIGNMM
 %token COLON
 %token ENDTAG
 
@@ -254,12 +289,50 @@ Expression:
 			list_add_tail(&$2->b, &$1->c);
 			$$ = $1;
 		}
+	| LValuePpMm              { $$ = $1; }
 	;
 
 LValue:
 	VAR ASSIGN
 		{
 			list_add_tail(&$1->b, &$2->c);
+			$$ = $2;
+		}
+	;
+
+LValuePpMm:
+	VAR ASSIGNPP
+		{
+			struct exec_node *plus;
+			struct exec_node *un;
+			struct exec_node *var;
+
+			my_exec_new_nul(plus, X_ADD, $2->line);
+			my_exec_new_ent(un,   X_INTEGER, 1, $2->line);
+			my_exec_new_ptr(var,  X_VAR, $1->v.v.var, $2->line);
+
+			list_add_tail(&var->b, &plus->c);
+			list_add_tail(&un->b,  &plus->c);
+
+			list_add_tail(&$1->b, &$2->c);
+			list_add_tail(&plus->b, &$2->c);
+			$$ = $2;
+		}
+	| VAR ASSIGNMM
+		{
+			struct exec_node *moins;
+			struct exec_node *un;
+			struct exec_node *var;
+
+			my_exec_new_nul(moins, X_SUB, $2->line);
+			my_exec_new_ent(un,    X_INTEGER, 1, $2->line);
+			my_exec_new_ptr(var,   X_VAR, $1->v.v.var, $2->line);
+
+			list_add_tail(&var->b, &moins->c);
+			list_add_tail(&un->b,  &moins->c);
+
+			list_add_tail(&$1->b, &$2->c);
+			list_add_tail(&moins->b, &$2->c);
 			$$ = $2;
 		}
 	;
