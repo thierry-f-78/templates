@@ -8,6 +8,16 @@ ssize_t testwrite(void *arg, const void *buf, size_t count) {
 	return write(1, buf, count);
 }
 
+void syntax(char *name) {
+	printf("\n\nsyntax: %s [-s] [-d <dotfile>] <parsefile>\n"
+	       "\t-s use with script\n"
+	       "\t-d generate dotfile\n"
+	       "\t<dotfile> the file when dot data are stored\n"
+	       "\t<parsefile> the script file\n"
+	       "\n", name);
+	exit(1);
+}
+
 int main(int argc, char *argv[]) {
 	struct exec *e;
 	struct exec_run *r;
@@ -17,17 +27,37 @@ int main(int argc, char *argv[]) {
 	struct timeval tv3;
 	int i;
 	int script = 0;
-	char *filename;
+	char *filename = NULL;
+	int dot = 0;
+	char *dotname;
 	FILE *fd;
 
 	for (i=1; i<argc; i++) {
-		if (argv[i][0] == '-') switch (argv[i][1]) {
-			case 's': script=1; break;
-		}
+		if (argv[i][0] == '-')
+			switch (argv[i][1]) {
+			case 's':
+				script = 1;
+				break;
+
+			case 'd':
+				dot = 1;
+				i++;
+				if (i == argc)
+					syntax(argv[0]);
+				dotname = argv[i];
+				break;
+
+			default:
+				syntax(argv[0]);
+
+			}
 		else
 			filename = argv[i];
 			
 	}
+
+	if (filename == NULL)
+		syntax(argv[0]);
 
 	/* init side */
 	e = exec_new_template();
@@ -60,10 +90,13 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	ret = exec_display(e, "a", 0);
-	if (ret != 0) {
-		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
-		exit(1);
+	/* build dot output */
+	if (dot == 1) {
+		ret = exec_display(e, dotname, 0);
+		if (ret != 0) {
+			fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
+			exit(1);
+		}
 	}
 
 	/* run side */  
