@@ -15,32 +15,54 @@ int main(int argc, char *argv[]) {
 	struct timeval tv1;
 	struct timeval tv2;
 	struct timeval tv3;
+	int i;
+	int script = 0;
+	char *filename;
+	FILE *fd;
 
-	if (argc != 2) {
-		fprintf(stderr, "\nsyntax: %s <file>\n\n", argv[0]);
-		exit(1);
+	for (i=1; i<argc; i++) {
+		if (argv[i][0] == '-') switch (argv[i][1]) {
+			case 's': script=1; break;
+		}
+		else
+			filename = argv[i];
+			
 	}
 
 	/* init side */
-
 	e = exec_new_template();
 	if (e == NULL) {
-		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 		exit(1);
 	}
 
 	exec_set_write(e, testwrite);
 	exec_set_easy(e, NULL);
 
-	ret = exec_parse(e, argv[1]);
+	/* open filename */
+	fd = fopen(filename, "r");
+	if (fd == NULL) {
+		fprintf(stderr, "fopen(%s): %s\n", filename, strerror(errno));
+		exit(1);
+		return -1;
+	}
+
+	/* read first line */
+	if (script == 1) {
+		char buf[2048];
+		fgets(buf, 2048, fd);
+	}
+
+	ret = exec_parse_file(e, fd);
+	fclose(fd);
 	if (ret != 0) {
-		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 		exit(1);
 	}
 
 	ret = exec_display(e, "a", 0);
 	if (ret != 0) {
-		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 		exit(1);
 	}
 
@@ -50,7 +72,7 @@ int main(int argc, char *argv[]) {
 
 	r = exec_new_run(e);
 	if (r == NULL) {
-		fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 		exit(1);
 	}
 
@@ -61,7 +83,7 @@ int main(int argc, char *argv[]) {
 		else if (ret == 0)
 			break;
 		else {
-			fprintf(stderr, "file \"%s\": %s\n", argv[1], e->error);
+			fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 			exit(1);
 		}
 	}
