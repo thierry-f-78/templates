@@ -21,7 +21,7 @@ void syntax(char *name) {
 int main(int argc, char *argv[]) {
 	struct exec *e;
 	struct exec_run *r;
-	int ret;
+	int ret, ret2;
 	struct timeval tv1;
 	struct timeval tv2;
 	struct timeval tv3;
@@ -83,12 +83,8 @@ int main(int argc, char *argv[]) {
 		fgets(buf, 2048, fd);
 	}
 
-	ret = exec_parse_file(e, fd);
+	ret2 = exec_parse_file(e, fd);
 	fclose(fd);
-	if (ret != 0) {
-		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
-		exit(1);
-	}
 
 	/* build dot output */
 	if (dot == 1) {
@@ -97,6 +93,12 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 			exit(1);
 		}
+	}
+
+	/* errors */
+	if (ret2 != 0) {
+		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
+		exit(1);
 	}
 
 	/* run side */  
