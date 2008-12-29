@@ -133,6 +133,14 @@ struct exec *exec_new_template(void);
 /**
  * Parse file for template
  * @param e is template id
+ * @param fd is FILE * pointer on open file in mode "r"
+ * @return struct exec if ok, NULL, if memory error
+ */
+int exec_parse_file(struct exec *e, FILE *fd);
+
+/**
+ * Parse file for template
+ * @param e is template id
  * @param file is filename tio parse
  * @return struct exec if ok, NULL, if memory error
  */

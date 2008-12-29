@@ -407,19 +407,11 @@ Args:
 	;
 %%
 
-int exec_parse(struct exec *e, char *file) {
+int exec_parse_file(struct exec *e, FILE *fd) {
 	struct exec_node *n;
 	int ret;
 	struct yyargs_t yyargs;
 	yyscan_t scanner;
-	FILE *fd;
-
-	/* open file */
-	fd = fopen(file, "r");
-	if (fd == NULL) {
-		snprintf(e->error, ERROR_LEN, "fopen(%s): %s\n", file, strerror(errno));
-		return -1;
-	}
 
 	/* init flex context */
 	yylex_init(&scanner);
@@ -441,7 +433,6 @@ int exec_parse(struct exec *e, char *file) {
 
 	/* destroy data */
 	yylex_destroy(scanner);
-	fclose(fd);
 
 	/* syntax error */
 	if (ret == 1)
@@ -465,4 +456,24 @@ int exec_parse(struct exec *e, char *file) {
 	exec_set_parents(n);
 
 	return 0;
+}
+
+int exec_parse(struct exec *e, char *file) {
+	FILE *fd;
+	int ret;
+
+	/* open file */
+	fd = fopen(file, "r");
+	if (fd == NULL) {
+		snprintf(e->error, ERROR_LEN, "fopen(%s): %s\n", file, strerror(errno));
+		return -1;
+	}
+
+	/* exec parse */
+	ret = exec_parse_file(e, fd);
+
+	/* close */
+	fclose(fd);
+
+	return ret;
 }
