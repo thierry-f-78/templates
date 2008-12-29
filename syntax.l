@@ -190,6 +190,12 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 	"++"       { my_exec_new(X_ASSIGN); return ASSIGNPP; }
 	"--"       { my_exec_new(X_ASSIGN); return ASSIGNMM; }
 
+	"+="       { my_exec_new(X_ASSIGN); return ASS_ADD; }
+	"-="       { my_exec_new(X_ASSIGN); return ASS_SUB; }
+	"*="       { my_exec_new(X_ASSIGN); return ASS_MUL; }
+	"/="       { my_exec_new(X_ASSIGN); return ASS_DIV; }
+	"%="       { my_exec_new(X_ASSIGN); return ASS_MOD; }
+
 	"+"        { my_exec_new(X_ADD); return ADD; }
 	"-"        { my_exec_new(X_SUB); return SUB; }
 	"*"        { my_exec_new(X_MUL); return MUL; }

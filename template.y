@@ -124,6 +124,11 @@ int yyerror(struct yyargs_t *args, char *str) {
 %token ASSIGN
 %token ASSIGNPP
 %token ASSIGNMM
+%token ASS_ADD
+%token ASS_SUB
+%token ASS_MUL
+%token ASS_DIV
+%token ASS_MOD
 %token COLON
 %token ENDTAG
 
@@ -286,7 +291,22 @@ Expression:
 	RValue                    { $$ = $1; }
 	| LValue Expression
 		{
-			list_add_tail(&$2->b, &$1->c);
+			/* LValue:
+			 * 
+			 *      =
+			 *    /   \
+			 *  VAR   ope
+			 *       /
+			 *     VAR
+			 */
+			if ($1->c.next->next != &$1->c) {
+				struct exec_node *ope;
+				/* search ope */
+				ope = container_of($1->c.next->next, struct exec_node, b);
+				list_add_tail(&$2->b, &ope->c);
+			}
+			else
+				list_add_tail(&$2->b, &$1->c);
 			$$ = $1;
 		}
 	| LValuePpMm              { $$ = $1; }
@@ -296,6 +316,76 @@ LValue:
 	VAR ASSIGN
 		{
 			list_add_tail(&$1->b, &$2->c);
+			$$ = $2;
+		}
+	| VAR ASS_ADD
+		{
+			struct exec_node *ope;
+			struct exec_node *var;
+
+			my_exec_new_nul(ope, X_ADD, $2->line);
+			my_exec_new_ptr(var, X_VAR, $1->v.v.var, $2->line);
+
+			list_add_tail(&var->b, &ope->c);
+
+			list_add_tail(&$1->b, &$2->c);
+			list_add_tail(&ope->b, &$2->c);
+			$$ = $2;
+		}
+	| VAR ASS_SUB
+		{
+			struct exec_node *ope;
+			struct exec_node *var;
+
+			my_exec_new_nul(ope, X_SUB, $2->line);
+			my_exec_new_ptr(var, X_VAR, $1->v.v.var, $2->line);
+
+			list_add_tail(&var->b, &ope->c);
+
+			list_add_tail(&$1->b, &$2->c);
+			list_add_tail(&ope->b, &$2->c);
+			$$ = $2;
+		}
+	| VAR ASS_MUL
+		{
+			struct exec_node *ope;
+			struct exec_node *var;
+
+			my_exec_new_nul(ope, X_MUL, $2->line);
+			my_exec_new_ptr(var, X_VAR, $1->v.v.var, $2->line);
+
+			list_add_tail(&var->b, &ope->c);
+
+			list_add_tail(&$1->b, &$2->c);
+			list_add_tail(&ope->b, &$2->c);
+			$$ = $2;
+		}
+	| VAR ASS_DIV
+		{
+			struct exec_node *ope;
+			struct exec_node *var;
+
+			my_exec_new_nul(ope, X_DIV, $2->line);
+			my_exec_new_ptr(var, X_VAR, $1->v.v.var, $2->line);
+
+			list_add_tail(&var->b, &ope->c);
+
+			list_add_tail(&$1->b, &$2->c);
+			list_add_tail(&ope->b, &$2->c);
+			$$ = $2;
+		}
+	| VAR ASS_MOD
+		{
+			struct exec_node *ope;
+			struct exec_node *var;
+
+			my_exec_new_nul(ope, X_MOD, $2->line);
+			my_exec_new_ptr(var, X_VAR, $1->v.v.var, $2->line);
+
+			list_add_tail(&var->b, &ope->c);
+
+			list_add_tail(&$1->b, &$2->c);
+			list_add_tail(&ope->b, &$2->c);
 			$$ = $2;
 		}
 	;
