@@ -49,9 +49,8 @@ enum exec_type {
 enum exec_args_type {
 	XT_STRING,
 	XT_INTEGER,
-	XT_VAR,
-	XT_FUNC,
-	XT_PTR
+	XT_PTR,
+	XT_NULL
 };
 
 /* maximiun argument can be given at function */

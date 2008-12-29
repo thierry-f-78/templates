@@ -34,11 +34,38 @@
 		return YYPARSE_ABORT; \
 	} while(0);
 
-/* this create nex node, check return value and return error if needed */
-#define my_exec_new(action, argument) \
+/* this create new node, check return value and return error if needed */
+#define my_exec_new(action) \
 	do { \
 		struct yyargs_t *arg = yyget_extra(yyscanner); \
-		*yylval = exec_new(arg->e, action, argument, yylineno); \
+		*yylval = exec_new(arg->e, action, yylineno); \
+		if (*yylval == NULL) \
+			return YYPARSE_ABORT; \
+	} while(0);
+
+/* this create new str node, check return value and return error if needed */
+#define my_exec_new_str(action, argument, len) \
+	do { \
+		struct yyargs_t *arg = yyget_extra(yyscanner); \
+		*yylval = exec_new_str(arg->e, action, argument, len, yylineno); \
+		if (*yylval == NULL) \
+			return YYPARSE_ABORT; \
+	} while(0);
+
+/* this create new int node, check return value and return error if needed */
+#define my_exec_new_ent(action, value) \
+	do { \
+		struct yyargs_t *arg = yyget_extra(yyscanner); \
+		*yylval = exec_new_ent(arg->e, action, value, yylineno); \
+		if (*yylval == NULL) \
+			return YYPARSE_ABORT; \
+	} while(0);
+
+/* this create new ptr node, check return value and return error if needed */
+#define my_exec_new_ptr(action, value) \
+	do { \
+		struct yyargs_t *arg = yyget_extra(yyscanner); \
+		*yylval = exec_new_ptr(arg->e, action, value, yylineno); \
 		if (*yylval == NULL) \
 			return YYPARSE_ABORT; \
 	} while(0);
@@ -104,7 +131,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 				blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
 				if (blockdup == NULL)
 					return YYPARSE_ABORT;
-				my_exec_new(X_PRINT, blockdup);
+				my_exec_new_str(X_PRINT, blockdup, extra->printsize);
 				extra->printsize = 0;
 				yy_push_state(LANGUAGE, yyscanner);
 				return PRINT; 
@@ -120,7 +147,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 				blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
 				if (blockdup == NULL)
 					return YYPARSE_ABORT;
-				my_exec_new(X_PRINT, blockdup);
+				my_exec_new_str(X_PRINT, blockdup, extra->printsize);
 				extra->printsize = 0;
 				return PRINT; 
 			}
@@ -149,37 +176,37 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 	";"        { return SEP; }
 	":"        { return COLON; }
 	
-	"for"      { my_exec_new(X_FOR, NULL); return FOR; }
-	"while"    { my_exec_new(X_WHILE, NULL); return WHILE; }
-	"if"       { my_exec_new(X_IF, NULL); return IF; }
+	"for"      { my_exec_new(X_FOR); return FOR; }
+	"while"    { my_exec_new(X_WHILE); return WHILE; }
+	"if"       { my_exec_new(X_IF); return IF; }
 	"else"     { return ELSE; }
-	"break"    { my_exec_new(X_BREAK, NULL); return BREAK; }
-	"continue" { my_exec_new(X_CONT, NULL); return CONT; }
-	"switch"   { my_exec_new(X_SWITCH, NULL); return SWITCH; }
+	"break"    { my_exec_new(X_BREAK); return BREAK; }
+	"continue" { my_exec_new(X_CONT); return CONT; }
+	"switch"   { my_exec_new(X_SWITCH); return SWITCH; }
 	"case"     { return CASE; }
 	"default"  { return DEFAULT; }
 	
-	"="        { my_exec_new(X_ASSIGN, NULL); return ASSIGN; }
-	"+"        { my_exec_new(X_ADD, NULL); return ADD; }
-	"-"        { my_exec_new(X_SUB, NULL); return SUB; }
-	"*"        { my_exec_new(X_MUL, NULL); return MUL; }
-	"/"        { my_exec_new(X_DIV, NULL); return DIV; }
-	"%"        { my_exec_new(X_MOD, NULL); return MOD; }
+	"="        { my_exec_new(X_ASSIGN); return ASSIGN; }
+	"+"        { my_exec_new(X_ADD); return ADD; }
+	"-"        { my_exec_new(X_SUB); return SUB; }
+	"*"        { my_exec_new(X_MUL); return MUL; }
+	"/"        { my_exec_new(X_DIV); return DIV; }
+	"%"        { my_exec_new(X_MOD); return MOD; }
 	
-	"=="       { my_exec_new(X_EQUAL, NULL); return EQUAL; }
-	"==="      { my_exec_new(X_STREQ, NULL); return STREQ; }
-	"!="       { my_exec_new(X_DIFF, NULL); return DIFF; }
-	"&&"       { my_exec_new(X_AND, NULL); return AND; }
-	"||"       { my_exec_new(X_OR, NULL); return OR; }
-	"<"        { my_exec_new(X_LT, NULL); return LT; }
-	">"        { my_exec_new(X_GT, NULL); return GT; }
-	">="       { my_exec_new(X_GE, NULL); return GE; }
-	"<="       { my_exec_new(X_LE, NULL); return LE; }
+	"=="       { my_exec_new(X_EQUAL); return EQUAL; }
+	"==="      { my_exec_new(X_STREQ); return STREQ; }
+	"!="       { my_exec_new(X_DIFF); return DIFF; }
+	"&&"       { my_exec_new(X_AND); return AND; }
+	"||"       { my_exec_new(X_OR); return OR; }
+	"<"        { my_exec_new(X_LT); return LT; }
+	">"        { my_exec_new(X_GT); return GT; }
+	">="       { my_exec_new(X_GE); return GE; }
+	"<="       { my_exec_new(X_LE); return LE; }
 	
-	"display"  { my_exec_new(X_DISPLAY, NULL); return DISPLAY; }
+	"display"  { my_exec_new(X_DISPLAY); return DISPLAY; }
 	
 	"NULL"     {
-			my_exec_new(X_INTEGER, 0);
+			my_exec_new_ent(X_INTEGER, 0);
 			return NUM;
 		}
 
@@ -191,7 +218,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 				seterror("line %d: '%s' not a number", yylineno, yytext);
 				return YYPARSE_ABORT;
 			}
-			my_exec_new(X_INTEGER, (void *)val);
+			my_exec_new_ent(X_INTEGER, val);
 			return NUM;
 		}
 
@@ -201,7 +228,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 			val = exec_var(arg->e, yytext);
 			if (val == NULL)
 				return YYPARSE_ABORT;
-			my_exec_new(X_VAR, val);
+			my_exec_new_ptr(X_VAR, val);
 			return VAR;
 		}
 
@@ -213,7 +240,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 				seterror("line %d: '%s' function not found", yylineno, yytext);
 				return YYPARSE_ABORT;
 			}
-			my_exec_new(X_FUNCTION, val);
+			my_exec_new_ptr(X_FUNCTION, val);
 			return FUNCTION;
 		}
 	
@@ -266,7 +293,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 			blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
 			if (blockdup == NULL)
 				return YYPARSE_ABORT;
-			my_exec_new(X_STRING, blockdup);
+			my_exec_new_str(X_STRING, blockdup, extra->printsize);
 			extra->printsize = 0;
 			return STR; 
 		} BEGIN(LANGUAGE);

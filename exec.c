@@ -47,7 +47,8 @@ struct exec_run *exec_new_run(struct exec *e) {
 	return r;
 }
 
-struct exec_node *exec_new(struct exec *e, enum exec_type type, void *value, int line) {
+struct exec_node *_exec_new(struct exec *e, enum exec_type type, void *value,
+                            enum exec_args_type valtype, int len, int line) {
 	struct exec_node *n;
 
 	n = malloc(sizeof *n);
@@ -58,8 +59,8 @@ struct exec_node *exec_new(struct exec *e, enum exec_type type, void *value, int
 
 	n->type = type;
 	n->v.v.ptr = value;
-	if (type == X_STRING || type == X_PRINT)
-		n->v.len = strlen(n->v.v.str);
+	n->v.len = len;
+	n->v.type = valtype;
 	n->line = line;
 	INIT_LIST_HEAD(&n->c);
 

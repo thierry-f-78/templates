@@ -616,7 +616,7 @@ int exec_run_now(struct exec_run *r) {
 *
 **********************************************************************/
 	exec_function(X_INTEGER) {
-		egt(-1).v.ent = egt(-1).v.n->v.v.ent;
+		memcpy(&egt(-1), &egt(-1).v.n->v, sizeof(egt(-1)));
 		exec_return();
 	} end_function
 

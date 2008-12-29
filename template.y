@@ -186,7 +186,7 @@ Block:
 	{ stack_push(); } InputElement
 		{
 			struct exec_node *n;
-			n = exec_new(args->e, X_COLLEC, NULL, -1);
+			n = exec_new(args->e, X_COLLEC, -1);
 			if (n == NULL)
 				YYABORT;
 			list_replace(stack_cur, &n->c);
@@ -196,7 +196,7 @@ Block:
 	| OPENBLOCK { stack_push(); } Input CLOSEBLOCK
 		{
 			struct exec_node *n;
-			n = exec_new(args->e, X_COLLEC, NULL, -1);
+			n = exec_new(args->e, X_COLLEC, -1);
 			if (n == NULL)
 				YYABORT;
 			list_replace(stack_cur, &n->c);
@@ -227,7 +227,7 @@ SwitchBlock:
 	SwitchKey { stack_push(); } Input
 		{
 			struct exec_node *n;
-			n = exec_new(args->e, X_COLLEC, NULL, -1);
+			n = exec_new(args->e, X_COLLEC, -1);
 			if (n == NULL)
 				YYABORT;
 			list_replace(stack_cur, &n->c);
@@ -241,7 +241,7 @@ SwitchKey:
 	| DEFAULT COLON
 		{
 			struct exec_node *n;
-			n = exec_new(args->e, X_NULL, NULL, -1);
+			n = exec_new(args->e, X_NULL, -1);
 			if (n == NULL)
 				YYABORT;
 			list_add_tail(&n->b, stack_cur);
@@ -445,7 +445,7 @@ int exec_parse_file(struct exec *e, FILE *fd) {
 	}
 
 	/* attach tree to the first node, set it into struct exec*/
-	n = exec_new(e, X_COLLEC, NULL, 0);
+	n = exec_new(e, X_COLLEC, -1);
 	if (n == NULL)
 		return -1;
 	n->p = NULL;
