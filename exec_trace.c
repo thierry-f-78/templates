@@ -279,6 +279,7 @@ int exec_display(struct exec *e, char *file, int display_ptr) {
 
 	fprintf(fd,
 		"digraph finite_state_machine {\n"
+		"\torientation=landscape\n"
 		"\tnode [ fontname=\"Helvetica\" ]\n"
 		"\tnode [ shape=\"record\" ]\n"
 		"\tnode [ style=\"filled\" ]\n"

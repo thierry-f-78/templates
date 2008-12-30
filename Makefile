@@ -49,7 +49,9 @@ clean:
 	rm -f $(OBJS) $(FILES) libtemplates.a templates client.o
 
 dot:
-	cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
+	cat a | dot -Gsize="11.0,7.6" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
+	
+# cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
 
 syntax.h:   syntax.l
 template.h: template.y
