@@ -127,7 +127,6 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 			get_extra;
 			if (extra->printsize != 0) {
 				char *blockdup;
-				add_char('\0');
 				blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
 				if (blockdup == NULL)
 					return YYPARSE_ABORT;
@@ -143,7 +142,6 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 			yy_push_state(LANGUAGE, yyscanner);
 			if (extra->printsize != 0) {
 				char *blockdup;
-				add_char('\0');
 				blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
 				if (blockdup == NULL)
 					return YYPARSE_ABORT;
@@ -298,7 +296,6 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 			get_extra;
 			char *blockdup;
 			yy_pop_state(yyscanner);
-			add_char('\0');
 			blockdup = exec_blockdup(extra->e, extra->print, extra->printsize);
 			if (blockdup == NULL)
 				return YYPARSE_ABORT;
