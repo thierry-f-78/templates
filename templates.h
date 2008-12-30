@@ -217,7 +217,7 @@ struct exec_run *exec_new_run(struct exec *e);
  * @param var is var name
  * @return struct exec_vars if OK, NULL if var not found
  */
-struct exec_vars *exec_get_var(struct exec *e, char *str);
+struct exec_vars *exec_get_var(struct exec *e, const char *str);
 
 /* for the static inline variable effectation funcs */
 #define reqvar (r->vars[v->offset])
@@ -230,6 +230,8 @@ struct exec_vars *exec_get_var(struct exec *e, char *str);
  */
 static inline
 void exec_set_var_int(struct exec_run *r, struct exec_vars *v, int val) {
+	if (v == NULL)
+		return;
 	if (reqvar.freeit == 1)
 		free(reqvar.v.str);
 	reqvar.v.ent = val;
@@ -246,6 +248,8 @@ void exec_set_var_int(struct exec_run *r, struct exec_vars *v, int val) {
 static inline
 void exec_set_var_str(struct exec_run *r, struct exec_vars *v,
                       char *val, int freeit) {
+	if (v == NULL)
+		return;
 	if (reqvar.freeit == 1)
 		free(reqvar.v.str);
 	reqvar.v.str = val;
@@ -265,6 +269,8 @@ void exec_set_var_str(struct exec_run *r, struct exec_vars *v,
 static inline
 void exec_set_var_block(struct exec_run *r, struct exec_vars *v,
                       char *val, int len, int freeit) {
+	if (v == NULL)
+		return;
 	if (reqvar.freeit == 1)
 		free(reqvar.v.str);
 	reqvar.v.str = val;

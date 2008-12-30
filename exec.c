@@ -117,7 +117,7 @@ struct exec_vars *exec_var(struct exec *e, char *str) {
 	return v;
 }
 
-struct exec_vars *exec_get_var(struct exec *e, char *str) {
+struct exec_vars *exec_get_var(struct exec *e, const char *str) {
 	struct exec_vars *v;
 
 	/* search var */
