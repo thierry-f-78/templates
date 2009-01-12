@@ -125,6 +125,7 @@ int main(int argc, char *argv[]) {
 
 	/* free exec run session */
 	exec_clear_run(r);
+	exec_clear_template(e);
 
 	gettimeofday(&tv2, NULL);
 

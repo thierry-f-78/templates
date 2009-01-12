@@ -20,6 +20,10 @@ struct exec *exec_new_template(void) {
 	return e;
 }
 
+void exec_clear_template(struct exec *e) {
+	free(e);
+}
+
 struct exec_run *exec_new_run(struct exec *e) {
 	struct exec_run *r;
 

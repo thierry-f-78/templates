@@ -130,6 +130,11 @@ struct exec_run {
 struct exec *exec_new_template(void);
 
 /**
+ * clear template - free memory
+ */
+void exec_clear_template(struct exec *e);
+
+/**
  * Parse file for template
  * @param e is template id
  * @param fd is FILE * pointer on open file in mode "r"
