@@ -236,6 +236,7 @@ void exec_set_var_int(struct exec_run *r, struct exec_vars *v, int val) {
 		free(reqvar.v.str);
 	reqvar.v.ent = val;
 	reqvar.type = XT_INTEGER;
+	reqvar.freeit = 0;
 }
 
 /**

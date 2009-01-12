@@ -36,6 +36,9 @@ struct exec_run *exec_new_run(struct exec *e) {
 		return NULL;
 	}
 
+	/* set variable stack */
+	memset(r->vars, '\0', sizeof(*r->vars) * e->nbvars);
+
 	/* copy default args and init run */
 	r->arg = e->arg;
 	r->w = e->w;
