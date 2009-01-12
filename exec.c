@@ -50,6 +50,17 @@ struct exec_run *exec_new_run(struct exec *e) {
 	return r;
 }
 
+void exec_clear_run(struct exec_run *r) {
+	int i;
+
+	for (i=0; i<r->e->nbvars; i++)
+		if (r->vars[i].freeit == 1)
+			free(r->vars[i].v.ptr);
+
+	free(r->vars);
+	free(r);
+}
+
 struct exec_node *_exec_new(struct exec *e, enum exec_type type, void *value,
                             enum exec_args_type valtype, int len, int line) {
 	struct exec_node *n;

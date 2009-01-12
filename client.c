@@ -123,6 +123,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	/* free exec run session */
+	exec_clear_run(r);
+
 	gettimeofday(&tv2, NULL);
 
 	tv3.tv_sec = tv2.tv_sec - tv1.tv_sec;

@@ -212,6 +212,12 @@ void exec_run_set_write(struct exec_run *r, exec_write w) {
 struct exec_run *exec_new_run(struct exec *e);
 
 /**
+ * Clear an execution session
+ * @param e is template id
+ */
+void exec_clear_run(struct exec_run *r);
+
+/**
  * get variable descriptor
  * @param e is template id
  * @param var is var name
