@@ -7,6 +7,11 @@
 #gcc -c calc.y.c -o calc.y.o
 #gcc -o calc calc.lex.o calc.y.o -ll -lm [éventuellement -lfl]
 
+LIBNAME = templates
+
+# get build version from the git tree in the form "lasttag-changes", and use "dev" if unknown
+BUILDVER := $(shell ref=$$((git describe --tags) 2>/dev/null) && ref=$${ref%-g*} && echo "$${ref\#v}")
+
 LDFLAGS = 
 CFLAGS = -Wall -g -O0
 YFLAGS = -v
@@ -37,21 +42,27 @@ CPPFLAGS =
 	$(RM) $@
 	$(LEX.l) --header-file=$@ $< >/dev/null
 
-all: libtemplates.a templates
+all: lib$(LIBNAME).a $(LIBNAME)
 
-libtemplates.a: $(OBJS)
+lib$(LIBNAME).a: $(OBJS)
 	$(AR) -rcv $@ $^
 
-templates: client.o libtemplates.a
+$(LIBNAME): client.o lib$(LIBNAME).a
 	$(CC) -o $@ $^
 
 clean:
-	rm -f $(OBJS) $(FILES) libtemplates.a templates client.o
+	rm -f $(OBJS) $(FILES) lib$(LIBNAME).a $(LIBNAME) client.o
 
 dot:
 	cat a | dot -Gsize="11.0,7.6" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
-	
-# cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
+	# cat a | dot -Gsize="7.6,11.0" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf
+
+pack:
+	rm -rf /tmp/$(LIBNAME)-$(BUILDVER) >/dev/null 2>&1; \
+	git clone . /tmp/$(LIBNAME)-$(BUILDVER) && \
+	tar --exclude .git -C /tmp/ -vzcf $(LIBNAME)-$(BUILDVER).tar.gz $(LIBNAME)-$(BUILDVER) && \
+	rm -rf /tmp/$(LIBNAME)-$(BUILDVER) >/dev/null 2>&1; \
+
 
 syntax.h:   syntax.l
 template.h: template.y
