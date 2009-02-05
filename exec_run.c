@@ -122,6 +122,7 @@ int exec_run_now(struct exec_run *r) {
 	if (r->retry != 0) switch(r->retry) {
 	case 1: goto retry_write_1;
 	case 2: goto retry_write_2;
+	case 3: goto retry_write_3;
 	}
 
 	/* call first node */
@@ -407,12 +408,20 @@ int exec_run_now(struct exec_run *r) {
 			egt(-(MXARGS+2)).v.n = container_of(egt(-(MXARGS+2)).v.n->b.next, struct exec_node, b);
 		}
 
+		retry_write_3:
+
 		/* copy args TODO: faut voir si il ne vaut mieux pas donner un morceau de pile ... */
 		for (i=0; i<egt(-(MXARGS+1)).v.ent; i++)
 			memcpy(&args[i], &egt(-1-i), sizeof(egt(-1-i)));
 
 		/* exec function */
-		egt(-(MXARGS+3)).v.n->v.v.func->f(r->arg, args, egt(-(MXARGS+1)).v.ent, &egt(-(MXARGS+3)));
+		i = egt(-(MXARGS+3)).v.n->v.v.func->f(r->arg, args,
+		                               egt(-(MXARGS+1)).v.ent, &egt(-(MXARGS+3)));
+
+		if (i != 0) {
+			r->retry = 3;
+			return 1;
+		}
 
 		exec_free_stack(MXARGS + 2);
 		exec_return();
