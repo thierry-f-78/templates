@@ -12,12 +12,13 @@
 #define __EXEC_INTERNALS_H__
 
 #include "templates.h"
+#include "list.h"
 
 #define YYSTYPE struct exec_node *
 #define STACK_SIZE 150
 
 struct yyargs_t {
-	struct list_head stack[STACK_SIZE];
+	struct tpl_list_head stack[STACK_SIZE];
 	int stack_idx;
 	struct exec *e;
 	void *scanner;

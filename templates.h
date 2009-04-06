@@ -8,6 +8,8 @@
  *
  */
 
+/** @file */
+
 #ifndef __TEMPLATES_H__
 #define __TEMPLATES_H__
 
@@ -15,8 +17,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-
-#include "list.h"
 
 enum exec_type {
 	X_NULL = 0,
@@ -72,6 +72,21 @@ enum exec_args_type {
 /* max size for an error string */
 #define ERROR_LEN 128
 
+/*
+ * definition from: linux-2.6.24/include/linux/kernel.h
+ *
+ * Simple doubly linked list implementation.
+ * 
+ * Some of the internal functions ("__xxx") are useful when
+ * manipulating whole lists rather than single entries, as
+ * sometimes we already know the next/prev entries and we can
+ * generate better code by using them directly rather than
+ * using the generic single-entry routines.
+ */
+struct tpl_list_head {
+	struct tpl_list_head *next, *prev;
+};
+
 struct exec_args {
 	union {
 		int ent;
@@ -91,21 +106,21 @@ typedef int (*exec_function)(void *easy, struct exec_args *args, int nargs,
 typedef ssize_t (*exec_write)(void *easy, const void *buf, size_t count);
 
 struct exec_vars {
-	struct list_head chain;
+	struct tpl_list_head chain;
 	char *name;
 	int offset;
 };
 
 struct exec_funcs {	
-	struct list_head chain;
+	struct tpl_list_head chain;
 	char *name;
 	exec_function f;
 };
 
 struct exec_node {
 	struct exec_node *p; /* parent */
-	struct list_head c;  /* children */
-	struct list_head b;  /* brother */
+	struct tpl_list_head c;  /* children */
+	struct tpl_list_head b;  /* brother */
 
 	enum exec_type type;
 	struct exec_args v;
@@ -115,8 +130,8 @@ struct exec_node {
 struct exec {
 	struct exec_node *program;
 	int nbvars;
-	struct list_head vars;
-	struct list_head funcs;
+	struct tpl_list_head vars;
+	struct tpl_list_head funcs;
 	void *arg;
 	exec_write w;
 	char error[ERROR_LEN];

@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "exec_internals.h"
 #include "templates.h"
 
 const char *exec_cmd2str[] = {
