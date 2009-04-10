@@ -111,7 +111,7 @@
 %}
 
 function        [a-zA-Z][a-zA-Z0-9_]*
-var             $[a-zA-Z][a-zA-Z0-9]*
+var             $[a-zA-Z][a-zA-Z0-9_]*
 num             -?[0-9]+
 hex             0x[0-9a-fA-F]+
 soctal          \\[0-7][0-7][0-7]
