@@ -104,7 +104,7 @@ struct exec_node *_exec_new(struct exec *e, enum exec_type type, void *value,
 char *exec_blockdup(struct exec *e, char *str, int len) {
 	char *out;
 
-	out = malloc(len);
+	out = malloc(len+1);
 	if (out == NULL) {
 		snprintf(e->error, ERROR_LEN, "malloc(%d): %s\n", len + 1, strerror(errno));
 		return NULL;
