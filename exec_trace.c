@@ -48,6 +48,13 @@ const char *exec_cmd2str[] = {
 	[X_CONT]     = "X_CONT"
 };
 
+const char *exec_type2str[] = {
+	[XT_STRING]  = "XT_STRING",
+	[XT_INTEGER] = "XT_INTEGER",
+	[XT_PTR]     = "XT_PTR",
+	[XT_NULL]    = "XT_NULL"
+};
+
 char *replace_n(struct exec *e, char *str) {
 	char *p;
 	char *dest;

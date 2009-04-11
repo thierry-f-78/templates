@@ -79,6 +79,12 @@ struct exec_node *_exec_new(struct exec *e, enum exec_type type, void *value,
                             enum exec_args_type valtype, int len, int line) {
 	struct exec_node *n;
 
+#ifdef DEBUG
+	fprintf(stderr, "[%s:%s:%d] type=%s(%d) value=%p, valtype=%s(%d), len=%d, line=%d\n",
+	        __FILE__, __FUNCTION__, __LINE__,
+	        exec_cmd2str[type], type, value, exec_type2str[valtype], valtype, len, line);
+#endif
+
 	n = malloc(sizeof *n);
 	if (n == NULL) {
 		snprintf(e->error, ERROR_LEN, "malloc(%d): %s\n", sizeof *n, strerror(errno));

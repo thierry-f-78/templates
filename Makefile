@@ -19,6 +19,10 @@ YFLAGS = -v
 OBJS =  template.o syntax.o exec.o exec_run.o exec_trace.o
 FILES = template.h template.c syntax.c syntax.h
 
+ifeq ($(DEBUG),1)
+	CFLAGS += -DDEBUG
+endif
+
 #YACC_DEBUG = -t
 #CPPFLAGS = -DDEBUGING -DYYDEBUG
 CPPFLAGS =

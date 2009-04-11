@@ -625,6 +625,11 @@ int exec_parse(struct exec *e, char *file) {
 	FILE *fd;
 	int ret;
 
+#ifdef DEBUG
+	fprintf(stderr, "[%s:%s:%d] parse new template [%s]\n",
+	        __FILE__, __FUNCTION__, __LINE__, file);
+#endif
+
 	/* open file */
 	fd = fopen(file, "r");
 	if (fd == NULL) {
