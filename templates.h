@@ -176,7 +176,9 @@ int exec_parse_file(struct exec *e, FILE *fd);
 int exec_parse(struct exec *e, char *file);
 
 /**
- * Build dot graph for debugging program
+ * Build dot graph for debugging program.
+ * You can build dot graph with this commanda line:
+ * 'cat <file> | dot -Gsize="11.0,7.6" -Gpage="8.3,11.7" -Tps | ps2pdf - graph.pdf'
  * @param e is template id
  * @param file is output file
  * @param display_ptr is option to watch pointer
