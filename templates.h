@@ -182,9 +182,10 @@ int exec_parse(struct exec *e, char *file);
  * @param e is template id
  * @param file is output file
  * @param display_ptr is option to watch pointer
+ * @param cut is the len of string displayed
  * @return 0 if ok, else -1
  */
-int exec_display(struct exec *e, char *file, int display_ptr);
+int exec_display(struct exec *e, char *file, int display_ptr, int cut);
 
 /**
  * Define function

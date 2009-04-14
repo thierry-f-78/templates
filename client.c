@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 
 	/* build dot output */
 	if (dot == 1) {
-		ret = exec_display(e, dotname, 0);
+		ret = exec_display(e, dotname, 0, -1);
 		if (ret != 0) {
 			fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 			exit(1);

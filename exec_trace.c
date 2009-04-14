@@ -73,6 +73,8 @@ char *replace_n(struct exec *e, char *str) {
 
 		case '>':
 		case '<':
+		case '}':
+		case '{':
 		case '"':
 			len += 2;
 			break;
@@ -152,10 +154,12 @@ char *replace_n(struct exec *e, char *str) {
 	return ret;
 }
 
-int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *fd, int display_ptr) {
+int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *fd, int display_ptr, int cut) {
 	struct exec_node *p;
 	char *c;
 	int ret;
+	int len;
+	char *tmp;
 
 	if (first == 1)
 		fprintf(fd, "\tnode [ fillcolor=\"yellow\" ]\n");
@@ -241,9 +245,22 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 
 	case X_PRINT:
 	case X_STRING:
-		c = replace_n(e, n->v.v.str);
+
+		/* cut char */
+		tmp = malloc(strlen(n->v.v.str)+1);
+		memcpy(tmp, n->v.v.str, strlen(n->v.v.str)+1);
+		if (cut > -1) {
+			len = strlen(tmp);
+			if (len > cut)
+				tmp[cut] = '\0';
+		}
+
+		/* replace invalid char */
+		c = replace_n(e, tmp);
+		free(tmp);
 		if (c == NULL)
 			return -1;
+
 		if (display_ptr == 1)
 			fprintf(fd, "\t\"%p\" [ label=\"{{{%p|p=%p}|{c=%p|next=%p|prev=%p}|"
 			       "{b=%p|next=%p|prev=%p}}|%s|\\\"%s\\\"}\" ]\n",
@@ -254,6 +271,8 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 		else
 			fprintf(fd, "\t\"%p\" [ label=\"{%s|\\\"%s\\\"}\" ]\n",
 			        n, exec_cmd2str[n->type], c);
+
+		free(c);
 		break;
 	
 	default:
@@ -276,7 +295,7 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 
 	list_for_each_entry(p, &n->c, b) {
 		fprintf(fd, "\t\"%p\" -> \"%p\"\n", n, p);
-		ret = exec_display_recurse(e, p, 0, fd, display_ptr);
+		ret = exec_display_recurse(e, p, 0, fd, display_ptr, cut);
 		if (ret != 0)
 			return -1;
 	}
@@ -284,7 +303,7 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 	return 0;
 }
 
-int exec_display(struct exec *e, char *file, int display_ptr) {
+int exec_display(struct exec *e, char *file, int display_ptr, int cut) {
 	struct exec_vars *v;
 	FILE *fd;
 	int ret;
@@ -312,7 +331,7 @@ int exec_display(struct exec *e, char *file, int display_ptr) {
 		fprintf(fd, "|{%s|%d}", v->name, v->offset);
 	fprintf(fd, "}\" fillcolor=\"lightblue\" ]\n");
 
-	ret = exec_display_recurse(e, e->program, 1, fd, display_ptr);
+	ret = exec_display_recurse(e, e->program, 1, fd, display_ptr, cut);
 
 	fprintf(fd, "\t\"vars\" -> \"%p\"\n", e->program);
 	fprintf(fd, "}\n");
