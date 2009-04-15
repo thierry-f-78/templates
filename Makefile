@@ -46,7 +46,10 @@ CPPFLAGS =
 	$(RM) $@
 	$(LEX.l) --header-file=$@ $< >/dev/null
 
-all: lib$(LIBNAME).a $(LIBNAME)
+all: lib$(LIBNAME).a $(LIBNAME) client
+
+client: lib$(LIBNAME).a client.c
+	$(CC) -o client client.c lib$(LIBNAME).a
 
 lib$(LIBNAME).a: $(OBJS)
 	$(AR) -rcv $@ $^
