@@ -96,6 +96,12 @@ int main(int argc, char *argv[]) {
 	ret2 = exec_parse_file(e, fd);
 	fclose(fd);
 
+	/* errors */
+	if (ret2 != 0) {
+		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
+		exit(1);
+	}
+
 	/* build dot output */
 	if (dot == 1) {
 		ret = exec_display(e, dotname, 0, -1);
@@ -103,12 +109,6 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
 			exit(1);
 		}
-	}
-
-	/* errors */
-	if (ret2 != 0) {
-		fprintf(stderr, "file \"%s\": %s\n", filename, e->error);
-		exit(1);
 	}
 
 	/* run side */  
