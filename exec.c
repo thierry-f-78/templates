@@ -30,7 +30,40 @@ struct exec *exec_new_template(void) {
 	return e;
 }
 
+static void _exec_clear_node(struct exec_node *node) {
+	struct exec_node *n;
+	struct exec_node *n_cur;
+
+	/* list nodes */
+	list_for_each_entry_safe(n, n_cur, &node->c, b) {
+		_exec_clear_node(n);
+		list_del(&n->b);
+		free(n);
+	}
+}
+
 void exec_clear_template(struct exec *e) {
+	struct exec_vars *v;
+	struct exec_vars *v_cur;
+	struct exec_funcs *f;
+	struct exec_funcs *f_cur;
+
+	/* clear execution tree */
+	_exec_clear_node(e->program);
+
+	/* clear vars */
+	list_for_each_entry_safe(v, v_cur, &e->vars, chain) {
+		list_del(&v->chain);
+		free(v->name);
+	}
+
+	/* clear functions */
+	list_for_each_entry_safe(f, f_cur, &e->funcs, chain) {
+		list_del(&f->chain);
+		free(f->name);
+	}
+
+	/* clear */
 	free(e);
 }
 
