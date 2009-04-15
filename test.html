@@ -1,0 +1,185 @@
+Test:
+-x-x-x-x-x-x-x-x-
+$m = 9;
+$m /= 2;
+-x-x-x-x-x-x-x-x-
+<%
+	$m = 9;
+	$m /= 2;
+
+#include "test_include.html"
+
+%>
+$m = <%=$m%>
+
+<% $test = "haha !!!!"; %>
+<% $num = 200; %>
+
+00000
+
+if ($toto==<%=$test%>) { "haha !" }
+
+<% = $test %>
+
+<%=$num%>
+
+toto
+paf
+[33m<b>prout !</b>[0m
+<%
+
+	display("\\x34 = \x34\n\\064 = \064\n\788\n");
+
+	display("\t.\n\t.\n\t.\n\t.\n\t.\n\t.\n\t.\e[34m\n.....\n.\n.\e[0m\n.\n.\n.\"hoho\"\n");
+
+	$prout = "var";
+
+	$o = 0;
+	while ($o != 3)
+		$o = $o + 1;
+
+	$var = 5;
+
+	switch ($var) {
+
+	case 1:
+		$u = 0x1;
+		break;
+
+	case 2:
+		$u = 2;
+		break;
+
+	case 3:
+		$u = 3;
+		break;
+
+	case 5:
+		
+		switch ($var) {
+		case 1: display("case 1"); break;
+		case 2: display("case 2"); break;
+		case 3: display("case 3"); break;
+		case 4: display("case 4"); break;
+		case 5: display("case 5"); break;
+		case 6: display("case 6"); break;
+		}
+
+	case 6:
+%>
+		case 6 !
+<%
+
+	default:
+%>
+		default !
+<%
+		break;
+
+	}
+
+	display("if($u == 1)\n");
+	if ($u == 1)
+		display("-> $u == 1\n");
+	else
+		display("-> $u != 1\n");
+
+	display("if($u == 1)\n ... $u = ");
+	if ($u == 1)
+		display("1");
+	else if ($u == 2)
+		display("2");
+	else if ($u == 3)
+		display("3");
+	else if ($u == 4)
+		display("4");
+	else if ($u == 5)
+		display("5");
+	else if ($u == 6)
+		display("6");
+	else if ($u == 7)
+		display("7");
+	else if ($u == 8)
+		display("8");
+	else if ($u == 9)
+		display("9");
+	else if ($u == 10)
+		display("10");
+	else if ($u == 11)
+		display("11");
+%>
+
+while ($j < 10) {j++}
+<%
+	while ($j < 10) {
+%>j++
+<%
+		$j++;
+	}
+
+	$i = 15;
+	display($prout);
+
+%>
+bon c'est fini
+<% 
+
+	for($i=0;
+	    $i < 5;
+	    $i ++ ) {
+
+%>
+	bla
+	bla
+<%
+
+		while ($toto != 2) {
+			display("eeeeee");
+			break;
+		}
+
+
+		for ($a = 1; $a < 10; $a = $a + 1) {
+			display("haha !");
+			if ($a == 1) { continue; }
+			else { break; }
+		}
+	}
+%>
+
+
+test:
+-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-
+$fin = 100;
+for($m=1; $m<=$fin; $m++) {
+	display($m);
+	if ($m!=$fin)
+		display(",");
+}
+-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-
+<%
+$fin = 100;
+for($m=1; $m<=$fin; $m++) {
+	display($m);
+	if ($m!=$fin)
+		display(",");
+}
+%>
+
+
+Test:
+-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-
+$str = "toto\0toto";
+display($str);
+-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-
+<%
+$str = "toto\0toto";
+display($str);
+%>
+
+
+
+fini
+
+
+
