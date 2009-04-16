@@ -49,7 +49,8 @@ void exec_clear_template(struct exec *e) {
 	struct exec_funcs *f_cur;
 
 	/* clear execution tree */
-	_exec_clear_node(e->program);
+	if (e->program != NULL)
+		_exec_clear_node(e->program);
 
 	/* clear vars */
 	list_for_each_entry_safe(v, v_cur, &e->vars, chain) {
