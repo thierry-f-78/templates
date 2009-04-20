@@ -157,6 +157,22 @@ struct exec_run {
 struct exec *exec_new_template(void);
 
 /**
+ * Set preprocessor
+ *
+ * the template system can give the template file at arbitrary 
+ * preprocessor program.
+ *
+ * This is usefull with cpp for using macros.
+ *
+ * "cpp -C -E -nostdinc -P"
+ *
+ * @param e is template id
+ * @param binary is path and any executable preprocessor
+ * @param ... is argument list NULL terminated
+ */
+int exec_set_preprocessor(struct exec *e, const char *binary, ...);
+
+/**
  * clear template - free memory
  */
 void exec_clear_template(struct exec *e);
