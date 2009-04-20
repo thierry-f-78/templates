@@ -24,6 +24,7 @@ struct exec *exec_new_template(void) {
 		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(*e), strerror(errno));
 		return NULL;
 	}
+	e->preprocessor = NULL;
 	e->nbvars = 0;
 	INIT_LIST_HEAD(&e->vars);
 	INIT_LIST_HEAD(&e->funcs);

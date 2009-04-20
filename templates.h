@@ -135,6 +135,8 @@ struct exec {
 	void *arg;
 	exec_write w;
 	char error[ERROR_LEN];
+	char *preprocessor;
+	char **argv;
 };
 
 struct exec_run {
