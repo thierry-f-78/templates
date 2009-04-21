@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* set preprocessor */
-	exec_set_preprocessor(e, "/usr/bin/cpp", "-C", "-E", "-nostdinc", "-P", NULL);
+	exec_set_preprocessor(e, "cpp -C -E -nostdinc -P | grep -v '^$'");
 
 	exec_set_write(e, testwrite);
 	exec_set_easy(e, NULL);

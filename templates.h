@@ -136,7 +136,6 @@ struct exec {
 	exec_write w;
 	char error[ERROR_LEN];
 	char *preprocessor;
-	char **argv;
 };
 
 struct exec_run {
@@ -170,7 +169,7 @@ struct exec *exec_new_template(void);
  * @param binary is path and any executable preprocessor
  * @param ... is argument list NULL terminated
  */
-int exec_set_preprocessor(struct exec *e, const char *binary, ...);
+int exec_set_preprocessor(struct exec *e, const char *cmd);
 
 /**
  * clear template - free memory

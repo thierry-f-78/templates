@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <stdarg.h>
 #include <string.h>
 
 #include "templates.h"
@@ -32,61 +31,15 @@ struct exec *exec_new_template(void) {
 	return e;
 }
 
-int exec_set_preprocessor(struct exec *e, const char *binary, ...) {
-	va_list ap;
-	const char *arg;
-	int i = 1;
-
-	/* count arguments */
-	va_start(ap, binary);
-	do {
-		arg = va_arg(ap, const char *);
-		i++;
-	} while (arg != NULL);
-	va_end(ap);
-
-	/* allocate memory for e->argv array */
-	e->argv = malloc(sizeof(char *) * i);	
-	if (e->argv == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%d): %s", sizeof(char *) * i,
-		         strerror(errno));
-		return -1;
-	}
+int exec_set_preprocessor(struct exec *e, const char *cmd) {
 
 	/* copy binary path */
-	e->preprocessor = strdup(binary);
+	e->preprocessor = strdup(cmd);
 	if (e->preprocessor == NULL) {
-		snprintf(e->error, ERROR_LEN, "strdup(%s): %s", binary,
+		snprintf(e->error, ERROR_LEN, "strdup(%s): %s", cmd,
 		         strerror(errno));
 		return -1;
 	}
-
-	/* set first arg */
-	e->argv[0] = strdup(binary);
-	if (e->argv[0] == NULL) {
-		snprintf(e->error, ERROR_LEN, "strdup(%s): %s", binary,
-		         strerror(errno));
-		return -1;
-	}
-
-	/* duplicate arguments */
-	i = 1;
-	va_start(ap, binary);
-	while (1) {
-		arg = va_arg(ap, const char *);
-		if (arg == NULL) {
-			e->argv[i] = NULL;
-			break;
-		}
-		e->argv[i] = strdup(arg);
-		if (e->argv[i] == NULL) {
-			snprintf(e->error, ERROR_LEN, "strdup(%s): %s", arg,
-			         strerror(errno));
-			return -1;
-		}
-		i++;
-	}
-	va_end(ap);
 
 	return 0;
 }

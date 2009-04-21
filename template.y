@@ -589,6 +589,7 @@ int exec_parse_file(struct exec *e, FILE *fd) {
 	yyscan_t scanner;
 	int pip[2];
 	int retcode;
+	char *args[4];
 
 	/* if preprocessor is set */
 	if (e->preprocessor != NULL) {
@@ -615,7 +616,11 @@ int exec_parse_file(struct exec *e, FILE *fd) {
 			dup2(pip[1], 1); /* use pipe for writing */
 			close(pip[1]);
 			close(fileno(fd));
-			retcode = execve(e->preprocessor, e->argv, environ);
+			args[0] = "/bin/sh";
+			args[1] = "-c";
+			args[2] = e->preprocessor;
+			args[3] = NULL;
+			retcode = execve("/bin/sh", args, environ);
 			if (retcode != 0) {
 				fprintf(stderr, "execve(%s): %s\n", e->preprocessor, strerror(errno));
 				exit(1);
