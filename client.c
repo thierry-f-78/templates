@@ -76,6 +76,9 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	/* set preprocessor */
+	exec_set_preprocessor(e, "/usr/bin/cpp", "-C", "-E", "-nostdinc", "-P", NULL);
+
 	exec_set_write(e, testwrite);
 	exec_set_easy(e, NULL);
 
