@@ -29,6 +29,8 @@
 #include "syntax.h"
 #include "templates.h"
 
+extern char **environ;
+
 /* this fucking bison parser does not understand
    "%lex-param { yyscan_t args->scanner }" */
 #define args_scanner args->scanner
@@ -585,6 +587,51 @@ int exec_parse_file(struct exec *e, FILE *fd) {
 	int ret;
 	struct yyargs_t yyargs;
 	yyscan_t scanner;
+	int pip[2];
+	int retcode;
+
+	/* if preprocessor is set */
+	if (e->preprocessor != NULL) {
+
+		/* build pipe */
+		retcode = pipe(pip);
+		if (retcode != 0) {
+			snprintf(e->error, ERROR_LEN, "pipe: %s", strerror(errno));
+			return -1;
+		}
+
+		/* fork */
+		retcode = fork();
+		if (retcode == -1) {
+			snprintf(e->error, ERROR_LEN, "fork: %s", strerror(errno));
+			return -1;
+		}
+
+		/* children */
+		if (retcode == 0) {
+			close(0);
+			close(1);
+			dup2(fileno(fd), 0); /* use the stream file ptr as input */
+			dup2(pip[1], 1); /* use pipe for writing */
+			close(pip[1]);
+			close(fileno(fd));
+			retcode = execve(e->preprocessor, e->argv, environ);
+			if (retcode != 0) {
+				fprintf(stderr, "execve(%s): %s\n", e->preprocessor, strerror(errno));
+				exit(1);
+			}
+			exit(0);
+		}
+
+		/* use pipe as input */
+		close(fileno(fd));
+		close(pip[1]);
+		fd = fdopen(pip[0], "r");
+		if (fd == NULL) {
+			snprintf(e->error, ERROR_LEN, "fdopen: %s", strerror(errno));
+			return -1;
+		}
+	}
 
 	/* init flex context */
 	yylex_init(&scanner);
@@ -606,6 +653,11 @@ int exec_parse_file(struct exec *e, FILE *fd) {
 
 	/* destroy data */
 	yylex_destroy(scanner);
+
+	/* wait for preprocessor */
+	if (e->preprocessor != NULL) {
+		waitpid(retcode, NULL, 0);
+	}
 
 	/* syntax error */
 	if (ret == 1)
