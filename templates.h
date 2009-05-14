@@ -316,6 +316,26 @@ void exec_set_var_str(struct exec_run *r, struct exec_vars *v,
 }
 
 /**
+ * set variable string value
+ * @param r is run program id
+ * @param v is var descriptor
+ * @param val is string
+ * @param free is flag. when this flags is set, the ptr is freed
+ */
+static inline
+void exec_set_var_ptr(struct exec_run *r, struct exec_vars *v,
+                      void *val, int freeit) {
+	if (v == NULL)
+		return;
+	if (reqvar.freeit == 1)
+		free(reqvar.v.str);
+	reqvar.v.ptr = val;
+	reqvar.len = 0;
+	reqvar.type = XT_PTR;
+	reqvar.freeit = freeit;
+}
+
+/**
  * set variable block value
  * @param r is run program id
  * @param v is var descriptor
