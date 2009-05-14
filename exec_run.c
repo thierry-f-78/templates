@@ -170,6 +170,10 @@ int exec_run_now(struct exec_run *r) {
 		/* execute children */
 		exec_NODE(egt(-4).v.n, 2, egt(-3));
 
+		if (egt(-3).type == XT_PTR ||
+		    egt(-3).type == XT_NULL)
+			goto X_DISPLAY_end;
+
 		if (egt(-3).type == XT_INTEGER) {
 			char convert[128];
 			egt(-3).len = snprintf(convert, 128, "%d", egt(-3).v.ent);
@@ -197,6 +201,7 @@ int exec_run_now(struct exec_run *r) {
 			return 1;
 		}
 
+X_DISPLAY_end:
 		exec_free_stack(4);
 		exec_return();
 	} end_function
