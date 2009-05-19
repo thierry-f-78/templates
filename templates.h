@@ -327,6 +327,10 @@ void exec_set_var_ptr(struct exec_run *r, struct exec_vars *v,
                       void *val, int freeit) {
 	if (v == NULL)
 		return;
+
+	if (v->offset > r->e->nbvars || v->offset < 0)
+		return;
+
 	if (reqvar.freeit == 1)
 		free(reqvar.v.str);
 	reqvar.v.ptr = val;
