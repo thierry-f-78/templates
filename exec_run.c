@@ -47,42 +47,13 @@ int exec_free_stack(struct exec_run *r, int size)
 			return -1; \
 		egt(-2).v.ent = __id; \
 		egt(-1).v.n = node; \
-		switch (node->type) { \
-		case X_NULL: goto exec_X_NULL; \
-		case X_COLLEC: goto exec_X_COLLEC; \
-		case X_PRINT: goto exec_X_PRINT; \
-		case X_ADD: \
-		case X_SUB: \
-		case X_MUL: \
-		case X_DIV: \
-		case X_MOD: \
-		case X_EQUAL: \
-		case X_STREQ: \
-		case X_DIFF: \
-		case X_LT: \
-		case X_GT: \
-		case X_LE: \
-		case X_GE: \
-		case X_AND: \
-		case X_OR: goto exec_X_TWO_OPERAND; \
-		case X_ASSIGN: goto exec_X_ASSIGN; \
-		case X_DISPLAY: goto exec_X_DISPLAY; \
-		case X_FUNCTION: goto exec_X_FUNCTION; \
-		case X_VAR: goto exec_X_VAR; \
-		case X_INTEGER: goto exec_X_INTEGER; \
-		case X_STRING: goto exec_X_STRING; \
-		case X_SWITCH: goto exec_X_SWITCH; \
-		case X_FOR: goto exec_X_FOR; \
-		case X_WHILE: goto exec_X_WHILE; \
-		case X_IF: goto exec_X_IF; \
-		case X_BREAK: \
-		case X_CONT: \
-		default: \
+		if (goto_function[node->type] == NULL) { \
 			snprintf(r->error, ERROR_LEN, \
 			         "[%s:%d] unknown function code <%d>", \
 			         __FILE__, __LINE__, node->type); \
 			return -1; \
 		} \
+		goto *goto_function[node->type];\
 		exec_ ## __id: \
 		if (exec_free_stack(r, 2) != 0) \
 			return -1; \
@@ -133,6 +104,38 @@ int exec_free_stack(struct exec_run *r, int size)
 
 int exec_run_now(struct exec_run *r) {
 	struct exec_args ret;
+
+	static const void *goto_function[] = {
+		[X_NULL]     = &&exec_X_NULL,
+		[X_COLLEC]   = &&exec_X_COLLEC,
+		[X_PRINT]    = &&exec_X_PRINT,
+		[X_ADD]      = &&exec_X_TWO_OPERAND,
+		[X_SUB]      = &&exec_X_TWO_OPERAND,
+		[X_MUL]      = &&exec_X_TWO_OPERAND,
+		[X_DIV]      = &&exec_X_TWO_OPERAND,
+		[X_MOD]      = &&exec_X_TWO_OPERAND,
+		[X_EQUAL]    = &&exec_X_TWO_OPERAND,
+		[X_STREQ]    = &&exec_X_TWO_OPERAND,
+		[X_DIFF]     = &&exec_X_TWO_OPERAND,
+		[X_LT]       = &&exec_X_TWO_OPERAND,
+		[X_GT]       = &&exec_X_TWO_OPERAND,
+		[X_LE]       = &&exec_X_TWO_OPERAND,
+		[X_GE]       = &&exec_X_TWO_OPERAND,
+		[X_AND]      = &&exec_X_TWO_OPERAND,
+		[X_OR]       = &&exec_X_TWO_OPERAND,
+		[X_ASSIGN]   = &&exec_X_ASSIGN,
+		[X_DISPLAY]  = &&exec_X_DISPLAY,
+		[X_FUNCTION] = &&exec_X_FUNCTION,
+		[X_VAR]      = &&exec_X_VAR,
+		[X_INTEGER]  = &&exec_X_INTEGER,
+		[X_STRING]   = &&exec_X_STRING,
+		[X_SWITCH]   = &&exec_X_SWITCH,
+		[X_FOR]      = &&exec_X_FOR,
+		[X_WHILE]    = &&exec_X_WHILE,
+		[X_IF]       = &&exec_X_IF,
+		[X_BREAK]    = NULL,
+		[X_CONT]     = NULL
+	};
 
 	/* go back at position in ENOENT write case */
 	if (r->retry != NULL)
