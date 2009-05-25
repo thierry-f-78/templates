@@ -12,14 +12,16 @@
 #include "templates.h"
 
 /* reserve words in stack */
-#define exec_reserve_stack(__number) \
-	do { \
-		r->stack_ptr += __number; \
-		if (r->stack_ptr >= STACKSIZE) { \
-			snprintf(r->error, ERROR_LEN, "stack overflow ( > STACKSIZE)"); \
-			return -1; \
-		} \
-	} while (0)
+static inline 
+int exec_reserve_stack(struct exec_run *r, int size)
+{
+	r->stack_ptr += size;
+	if (r->stack_ptr >= STACKSIZE) {
+		snprintf(r->error, ERROR_LEN, "stack overflow ( > STACKSIZE)");
+		return -1;
+	}
+	return 0;
+}
 
 /* restore words into stack */
 #define exec_free_stack(__number) \
@@ -39,7 +41,8 @@
 #define exec_NODE(__node, __id, __ret) \
 	do { \
 		struct exec_node *node = __node; \
-		exec_reserve_stack(2); \
+		if (exec_reserve_stack(r, 2) != 0) \
+			return -1; \
 		egt(-2).v.ent = __id; \
 		egt(-1).v.n = node; \
 		switch (node->type) { \
@@ -161,7 +164,8 @@ int exec_run_now(struct exec_run *r) {
 		 * -2: (int) cur len
 		 * -1: (int) len
 		 */
-		exec_reserve_stack(4);
+		if (exec_reserve_stack(r, 4) != 0)
+			return -1;
 
 		/* get children containing how to display */
 		egt(-4).v.n = container_of(egt(-5).v.n->c.next,
@@ -217,7 +221,8 @@ X_DISPLAY_end:
 		 * -2: (int) cur len
 		 * -1: (int) len
 		 */
-		exec_reserve_stack(2);
+		if (exec_reserve_stack(r, 2) != 0)
+			return -1;
 
 		egt(-1).v.ent = egt(-3).v.n->v.len;
 		egt(-2).v.ent = egt(-1).v.ent;
@@ -248,7 +253,8 @@ X_DISPLAY_end:
 		/* -2: (n) execute node
 		 * -1: (n) current execute node
 		 */
-		exec_reserve_stack(1);
+		if (exec_reserve_stack(r, 1) != 0)
+			return -1;
 
 		egt(-1).v.n = container_of(egt(-2).v.n->c.next, struct exec_node, b);
 
@@ -312,7 +318,8 @@ X_DISPLAY_end:
 		 * -2 : a et val(a)
 		 * -1 : b et val(b)
 		 */
-		exec_reserve_stack(2);
+		if (exec_reserve_stack(r, 2) != 0)
+			return -1;
 
 		egt(-2).v.n = container_of(egt(-3).v.n->c.next, struct exec_node, b);
 		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
@@ -371,7 +378,8 @@ X_DISPLAY_end:
 		 * -2 : a
 		 * -1 : b
 		 */
-		exec_reserve_stack(2);
+		if (exec_reserve_stack(r, 2) != 0)
+			return -1;
 
 		egt(-2).v.n = container_of(egt(-3).v.n->c.next, struct exec_node, b);
 		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
@@ -395,7 +403,8 @@ X_DISPLAY_end:
 		 * - (MXARGS+1) : nargs
 		 * - (       1) : args
 		 */
-		exec_reserve_stack(MXARGS + 2);
+		if (exec_reserve_stack(r, MXARGS + 2) != 0)
+			return -1;
 		int i;
 		struct exec_args args[MXARGS];
 
@@ -455,7 +464,8 @@ X_DISPLAY_end:
 		 * -2 : exec
 		 * -1 : ok
 		 */
-		exec_reserve_stack(4);
+		if (exec_reserve_stack(r, 4) != 0)
+			return -1;
 
 		/* get var */
 		egt(-4).v.n = container_of(egt(-5).v.n->c.next, struct exec_node, b);
@@ -514,7 +524,8 @@ X_DISPLAY_end:
 		 * -2 : next
 		 * -1 : exec
 		 */
-		exec_reserve_stack(4);
+		if (exec_reserve_stack(r, 4) != 0)
+			return -1;
 
 		egt(-4).v.n = container_of(egt(-5).v.n->c.next, struct exec_node, b);
 		egt(-3).v.n = container_of(egt(-4).v.n->b.next, struct exec_node, b);
@@ -559,7 +570,8 @@ X_DISPLAY_end:
 		 * -2 : cond
 		 * -1 : exec
 		 */
-		exec_reserve_stack(2);
+		if (exec_reserve_stack(r, 2) != 0)
+			return -1;
 
 		egt(-2).v.n = container_of(egt(-3).v.n->c.next, struct exec_node, b);
 		egt(-1).v.n = container_of(egt(-2).v.n->b.next, struct exec_node, b);
@@ -597,7 +609,8 @@ X_DISPLAY_end:
 		 * -2 : exec
 		 * -1 : exec_else
 		 */
-		exec_reserve_stack(3);
+		if (exec_reserve_stack(r, 3) != 0)
+			return -1;
 
 		// TODO: deux variables suffisent ... on n'exucute pas le true et le false en meme temps !
 		egt(-3).v.n = container_of(egt(-4).v.n->c.next, struct exec_node, b);
