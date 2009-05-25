@@ -24,14 +24,16 @@ int exec_reserve_stack(struct exec_run *r, int size)
 }
 
 /* restore words into stack */
-#define exec_free_stack(__number) \
-	do { \
-		r->stack_ptr -= __number; \
-		if (r->stack_ptr < 0) { \
-			snprintf(r->error, ERROR_LEN, "stack overflow ( < 0)"); \
-			return -1; \
-		} \
-	} while (0)
+static inline
+int exec_free_stack(struct exec_run *r, int size)
+{
+	r->stack_ptr -= size;
+	if (r->stack_ptr < 0) {
+		snprintf(r->error, ERROR_LEN, "stack overflow ( < 0)");
+		return -1;
+	}
+	return 0;
+}
 
 /* relative acces into stack */
 #define egt(__relindex) \
@@ -82,7 +84,8 @@ int exec_reserve_stack(struct exec_run *r, int size)
 			return -1; \
 		} \
 		exec_ ## __id: \
-		exec_free_stack(2); \
+		if (exec_free_stack(r, 2) != 0) \
+			return -1; \
 		/* c'est un peu degeulasse: ja vais chercher \
 		   des données dans la stack libérée */ \
 		memcpy(&__ret, &egt(1), sizeof(__ret)); \
@@ -206,7 +209,8 @@ int exec_run_now(struct exec_run *r) {
 		}
 
 X_DISPLAY_end:
-		exec_free_stack(4);
+		if (exec_free_stack(r, 4) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -239,7 +243,8 @@ X_DISPLAY_end:
 			return 1;
 		}
 
-		exec_free_stack(2);
+		if (exec_free_stack(r, 2) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -290,7 +295,8 @@ X_DISPLAY_end:
 			}
 		}
 
-		exec_free_stack(1);
+		if (exec_free_stack(r, 1) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -363,7 +369,8 @@ X_DISPLAY_end:
 			         "[%s:%d] unknown function code", __FILE__, __LINE__);
 			return -1;
 		}
-		exec_free_stack(2);
+		if (exec_free_stack(r, 2) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -387,7 +394,8 @@ X_DISPLAY_end:
 		exec_NODE(egt(-1).v.n, 30, r->vars[ egt(-2).v.n->v.v.var->offset ]);
 
 		memcpy(&egt(-3), &r->vars[ egt(-2).v.n->v.v.var->offset], sizeof(egt(-3)));
-		exec_free_stack(2);
+		if (exec_free_stack(r, 2) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -447,7 +455,8 @@ X_DISPLAY_end:
 			return 1;
 		}
 
-		exec_free_stack(MXARGS + 2);
+		if (exec_free_stack(r, MXARGS + 2) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -507,7 +516,8 @@ X_DISPLAY_end:
 			}
 		}
 
-		exec_free_stack(4);
+		if (exec_free_stack(r, 4) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -555,7 +565,8 @@ X_DISPLAY_end:
 			exec_NODE(egt(-2).v.n, 37, ret);
 		}
 
-		exec_free_stack(4);
+		if (exec_free_stack(r, 4) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -593,7 +604,8 @@ X_DISPLAY_end:
 			/* implicit continue */
 		}
 
-		exec_free_stack(2);
+		if (exec_free_stack(r, 2) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
@@ -631,7 +643,8 @@ X_DISPLAY_end:
 		else
 			egt(-4).v.ent = 0;
 
-		exec_free_stack(3);
+		if (exec_free_stack(r, 3) != 0)
+			return -1;
 		exec_return();
 	} end_function
 
