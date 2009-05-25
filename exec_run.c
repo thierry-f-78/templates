@@ -175,11 +175,27 @@ int exec_run_now(struct exec_run *r) {
 		/* execute children */
 		exec_NODE(egt(-4).v.n, 2, egt(-3));
 
-		if (egt(-3).type == XT_PTR ||
-		    egt(-3).type == XT_NULL)
-			goto X_DISPLAY_end;
+		/* convert pointer into displayable format */
+		if (egt(-3).type == XT_PTR) {
+			char convert[128];
+			egt(-3).len = snprintf(convert, 128, "%p", egt(-3).v.ptr);
+			egt(-3).v.str = strdup(convert);
+			if (egt(-3).v.str == NULL) {
+				snprintf(r->error, ERROR_LEN, "[%s:%d] strdup(\"%s\"): %s",
+				         __FILE__, __LINE__, convert, strerror(errno));
+				return -1;
+			}
+			egt(-3).freeit = 1;
+		}
 
-		if (egt(-3).type == XT_INTEGER) {
+		/* convert NULL into displayable format */
+		else if (egt(-3).type == XT_NULL) {
+			egt(-3).v.str = "(null)";
+			egt(-3).freeit = 0;
+		}
+
+		/* convert interger into displayable format */
+		else if (egt(-3).type == XT_INTEGER) {
 			char convert[128];
 			egt(-3).len = snprintf(convert, 128, "%d", egt(-3).v.ent);
 			egt(-3).v.str = strdup(convert);
@@ -206,7 +222,6 @@ X_DISPLAY_retry:
 			return 1;
 		}
 
-X_DISPLAY_end:
 		if (exec_free_stack(r, 4) != 0)
 			return -1;
 		exec_return();
