@@ -309,10 +309,18 @@ void exec_set_var_str(struct exec_run *r, struct exec_vars *v,
 		return;
 	if (reqvar.freeit == 1)
 		free(reqvar.v.str);
-	reqvar.v.str = val;
-	reqvar.len = strlen(val);
+		
+	if (val == NULL) {
+		reqvar.v.str = "";
+		reqvar.len = 0;
+		reqvar.freeit = 0;
+	}
+	else {
+		reqvar.v.str = val;
+		reqvar.len = strlen(val);
+		reqvar.freeit = freeit;
+	}
 	reqvar.type = XT_STRING;
-	reqvar.freeit = freeit;
 }
 
 /**
