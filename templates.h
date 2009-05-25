@@ -146,7 +146,7 @@ struct exec_run {
 	struct exec_node *n;
 	struct exec_args stack[STACKSIZE];
 	int stack_ptr;
-	int retry;
+	void *retry;
 	char error[ERROR_LEN];
 };
 

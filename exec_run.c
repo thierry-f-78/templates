@@ -135,11 +135,9 @@ int exec_run_now(struct exec_run *r) {
 	struct exec_args ret;
 
 	/* go back at position in ENOENT write case */
-	if (r->retry != 0) switch(r->retry) {
-	case 1: goto retry_write_1;
-	case 2: goto retry_write_2;
-	case 3: goto retry_write_3;
-	}
+	if (r->retry != NULL)
+		goto *r->retry;
+
 
 	/* call first node */
 	exec_NODE(r->n, 1, ret);
@@ -197,14 +195,14 @@ int exec_run_now(struct exec_run *r) {
 		egt(-2).v.ent = egt(-1).v.ent;
 	
 		/* write */
-		retry_write_1:
+X_DISPLAY_retry:
 		egt(-2).v.ent -= r->w(r->arg,
 		                      egt(-3).v.str + ( egt(-1).v.ent - egt(-2).v.ent ),
 		                      egt(-2).v.ent);
 
 		/* end of write ? */
 		if (egt(-2).v.ent > 0) {
-			r->retry = 1;
+			r->retry = &&X_DISPLAY_retry;
 			return 1;
 		}
 
@@ -232,14 +230,14 @@ X_DISPLAY_end:
 		egt(-2).v.ent = egt(-1).v.ent;
 
 		/* write */
-		retry_write_2:
+X_PRINT_retry:
 		egt(-2).v.ent -= r->w(r->arg,
 		                      egt(-3).v.n->v.v.str + ( egt(-1).v.ent - egt(-2).v.ent ),
 		                      egt(-2).v.ent);
 
 		/* end of write ? */
 		if (egt(-2).v.ent > 0) {
-			r->retry = 2;
+			r->retry = &&X_PRINT_retry;
 			return 1;
 		}
 
@@ -440,7 +438,7 @@ X_DISPLAY_end:
 			egt(-(MXARGS+2)).v.n = container_of(egt(-(MXARGS+2)).v.n->b.next, struct exec_node, b);
 		}
 
-		retry_write_3:
+X_FUNCTION_retry:
 
 		/* copy args TODO: faut voir si il ne vaut mieux pas donner un morceau de pile ... */
 		for (i=0; i<egt(-(MXARGS+1)).v.ent; i++)
@@ -451,7 +449,7 @@ X_DISPLAY_end:
 		                               egt(-(MXARGS+1)).v.ent, &egt(-(MXARGS+3)));
 
 		if (i != 0) {
-			r->retry = 3;
+			r->retry = &&X_FUNCTION_retry;
 			return 1;
 		}
 
