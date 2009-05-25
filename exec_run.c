@@ -40,12 +40,12 @@ int exec_free_stack(struct exec_run *r, int size)
 	r->stack[r->stack_ptr + __relindex]
 
 /* execute function */
-#define exec_NODE(__node, __id, __ret) \
+#define exec_NODE(__node, __label, __ret) \
 	do { \
 		struct exec_node *node = __node; \
 		if (exec_reserve_stack(r, 2) != 0) \
 			return -1; \
-		egt(-2).v.ent = __id; \
+		egt(-2).v.ptr = &&exec_ ## __label; \
 		egt(-1).v.n = node; \
 		if (goto_function[node->type] == NULL) { \
 			snprintf(r->error, ERROR_LEN, \
@@ -54,7 +54,7 @@ int exec_free_stack(struct exec_run *r, int size)
 			return -1; \
 		} \
 		goto *goto_function[node->type];\
-		exec_ ## __id: \
+		exec_ ## __label: \
 		if (exec_free_stack(r, 2) != 0) \
 			return -1; \
 		/* c'est un peu degeulasse: ja vais chercher \
@@ -62,33 +62,14 @@ int exec_free_stack(struct exec_run *r, int size)
 		memcpy(&__ret, &egt(1), sizeof(__ret)); \
 	} while(0)
 
-/* return to caller
- * for updating this function, run :r !./get_return_points.sh */
-#define switchline(index) case index: goto exec_ ## index;
+/* return to caller */
 #define exec_return() \
-	switch (egt(-2).v.ent) { \
-		default: \
-		switchline(1) \
-		switchline(2) \
-		switchline(3) \
-		switchline(4) \
-		switchline(5) \
-		switchline(30) \
-		switchline(31) \
-		switchline(32) \
-		switchline(33) \
-		switchline(34) \
-		switchline(35) \
-		switchline(36) \
-		switchline(37) \
-		switchline(38) \
-		switchline(39) \
-		switchline(40) \
-		switchline(41) \
-		switchline(42) \
-			snprintf(r->error, ERROR_LEN, "[%s:%d] error in return code", __FILE__, __LINE__); \
-			return -1; \
-	}
+	if (egt(-2).v.ptr == NULL) { \
+		snprintf(r->error, ERROR_LEN, "[%s:%d] error in return code", \
+		         __FILE__, __LINE__); \
+		return -1; \
+	} \
+	goto *egt(-2).v.ptr;
 
 /* this stats pseudo function */
 #define exec_function(xxx) \
