@@ -39,6 +39,13 @@ int exec_free_stack(struct exec_run *r, int size)
 #define egt(__relindex) \
 	r->stack[r->stack_ptr + __relindex]
 
+/* ent accessor */
+static inline int *get_ent(struct exec_run *r, int relative_index) {
+	return &r->stack[r->stack_ptr + relative_index].v.ent;
+}
+#define ENT(__var) (*get_ent(r, __var))
+	
+
 /* execute function */
 #define EXEC_NODE(__node, __label, __ret) \
 	do { \
@@ -147,6 +154,12 @@ int exec_run_now(struct exec_run *r) {
 		 * -2: (int) cur len
 		 * -1: (int) len
 		 */
+		static const int retnode = -5;
+		static const int child   = -4;
+		static const int dsp     = -3;
+		static const int cur_len = -2;
+		static const int len     = -1;
+
 		if (exec_reserve_stack(r, 4) != 0)
 			return -1;
 
@@ -179,7 +192,7 @@ int exec_run_now(struct exec_run *r) {
 		/* convert interger into displayable format */
 		else if (egt(-3).type == XT_INTEGER) {
 			char convert[128];
-			egt(-3).len = snprintf(convert, 128, "%d", egt(-3).v.ent);
+			egt(-3).len = snprintf(convert, 128, "%d", ENT(dsp));
 			egt(-3).v.str = strdup(convert);
 			if (egt(-3).v.str == NULL) {
 				snprintf(r->error, ERROR_LEN, "[%s:%d] strdup(\"%s\"): %s",
@@ -189,17 +202,17 @@ int exec_run_now(struct exec_run *r) {
 			egt(-3).freeit = 1;
 		}
 
-		egt(-1).v.ent = egt(-3).len;
-		egt(-2).v.ent = egt(-1).v.ent;
+		ENT(len)     = egt(-3).len;
+		ENT(cur_len) = egt(-3).len;
 	
 		/* write */
 X_DISPLAY_retry:
-		egt(-2).v.ent -= r->w(r->arg,
-		                      egt(-3).v.str + ( egt(-1).v.ent - egt(-2).v.ent ),
-		                      egt(-2).v.ent);
+		ENT(cur_len) -= r->w(r->arg,
+		                          egt(-3).v.str + ( ENT(len) - ENT(cur_len) ),
+		                          ENT(cur_len));
 
 		/* end of write ? */
-		if (egt(-2).v.ent > 0) {
+		if (ENT(cur_len) > 0) {
 			r->retry = &&X_DISPLAY_retry;
 			return 1;
 		}
@@ -220,20 +233,24 @@ X_DISPLAY_retry:
 		 * -2: (int) cur len
 		 * -1: (int) len
 		 */
+		static const int node    = -3;
+		static const int cur_len = -2;
+		static const int len     = -1;
+
 		if (exec_reserve_stack(r, 2) != 0)
 			return -1;
 
-		egt(-1).v.ent = egt(-3).v.n->v.len;
-		egt(-2).v.ent = egt(-1).v.ent;
+		ENT(len)     = egt(-3).v.n->v.len;
+		ENT(cur_len) = egt(-3).v.n->v.len;
 
 		/* write */
 X_PRINT_retry:
-		egt(-2).v.ent -= r->w(r->arg,
-		                      egt(-3).v.n->v.v.str + ( egt(-1).v.ent - egt(-2).v.ent ),
-		                      egt(-2).v.ent);
+		ENT(cur_len) -= r->w(r->arg,
+		                     egt(-3).v.n->v.v.str + ( ENT(len) - ENT(cur_len) ),
+		                     ENT(cur_len));
 
 		/* end of write ? */
-		if (egt(-2).v.ent > 0) {
+		if (ENT(cur_len) > 0) {
 			r->retry = &&X_PRINT_retry;
 			return 1;
 		}
@@ -253,6 +270,9 @@ X_PRINT_retry:
 		/* -2: (n) execute node
 		 * -1: (n) current execute node
 		 */
+		static const int retcode = -2;
+		static const int exec    = -1;
+
 		if (exec_reserve_stack(r, 1) != 0)
 			return -1;
 
@@ -263,13 +283,13 @@ X_PRINT_retry:
 
 			/* if break */
 			if (egt(-1).v.n->type == X_BREAK) {
-				egt(-2).v.ent = -1;
+				ENT(retcode) = -1;
 				break;
 			}
 
 			/* if continue */
 			if (egt(-1).v.n->type == X_CONT) {
-				egt(-2).v.ent = -2;
+				ENT(retcode) = -2;
 				break;
 			}
 
@@ -278,7 +298,7 @@ X_PRINT_retry:
 
 			/* if "if" return break or continue */
 			if (egt(-1).v.n->type == X_IF && ret.v.ent != 0) {
-				egt(-2).v.ent = ret.v.ent;
+				ENT(retcode) = ret.v.ent;
 				break;
 			}
 
@@ -319,6 +339,10 @@ X_PRINT_retry:
 		 * -2 : a et val(a)
 		 * -1 : b et val(b)
 		 */
+		static const int n = -3;
+		static const int a = -2;
+		static const int b = -1;
+
 		if (exec_reserve_stack(r, 2) != 0)
 			return -1;
 
@@ -329,20 +353,20 @@ X_PRINT_retry:
 		EXEC_NODE(egt(-1).v.n, 5, egt(-1));
 
 		switch (egt(-3).v.n->type) {
-		case X_ADD:   egt(-3).v.ent = egt(-2).v.ent  + egt(-1).v.ent;            break;
-		case X_SUB:   egt(-3).v.ent = egt(-2).v.ent  - egt(-1).v.ent;            break;
-		case X_MUL:   egt(-3).v.ent = egt(-2).v.ent  * egt(-1).v.ent;            break;
-		case X_DIV:   egt(-3).v.ent = egt(-2).v.ent  / egt(-1).v.ent;            break;
-		case X_MOD:   egt(-3).v.ent = egt(-2).v.ent  % egt(-1).v.ent;            break;
-		case X_EQUAL: egt(-3).v.ent = egt(-2).v.ent == egt(-1).v.ent;            break;
-		case X_STREQ: egt(-3).v.ent = strcmp(egt(-2).v.str, egt(-1).v.str) == 0; break;
-		case X_DIFF:  egt(-3).v.ent = egt(-2).v.ent != egt(-1).v.ent;            break;
-		case X_LT:    egt(-3).v.ent = egt(-2).v.ent  < egt(-1).v.ent;            break;
-		case X_GT:    egt(-3).v.ent = egt(-2).v.ent  > egt(-1).v.ent;            break;
-		case X_LE:    egt(-3).v.ent = egt(-2).v.ent <= egt(-1).v.ent;            break;
-		case X_GE:    egt(-3).v.ent = egt(-2).v.ent >= egt(-1).v.ent;            break;
-		case X_AND:   egt(-3).v.ent = egt(-2).v.ent && egt(-1).v.ent;            break;
-		case X_OR:    egt(-3).v.ent = egt(-2).v.ent || egt(-1).v.ent;            break;
+		case X_ADD:   ENT(n) = ENT(a)  + ENT(b);            break;
+		case X_SUB:   ENT(n) = ENT(a)  - ENT(b);            break;
+		case X_MUL:   ENT(n) = ENT(a)  * ENT(b);            break;
+		case X_DIV:   ENT(n) = ENT(a)  / ENT(b);            break;
+		case X_MOD:   ENT(n) = ENT(a)  % ENT(b);            break;
+		case X_EQUAL: ENT(n) = ENT(a) == ENT(b);            break;
+		case X_STREQ: ENT(n) = strcmp(egt(-2).v.str, egt(-1).v.str) == 0; break;
+		case X_DIFF:  ENT(n) = ENT(a) != ENT(b);            break;
+		case X_LT:    ENT(n) = ENT(a)  < ENT(b);            break;
+		case X_GT:    ENT(n) = ENT(a)  > ENT(b);            break;
+		case X_LE:    ENT(n) = ENT(a) <= ENT(b);            break;
+		case X_GE:    ENT(n) = ENT(a) >= ENT(b);            break;
+		case X_AND:   ENT(n) = ENT(a) && ENT(b);            break;
+		case X_OR:    ENT(n) = ENT(a) || ENT(b);            break;
 		/* just for warnings ! */
 		case X_NULL:
 		case X_COLLEC:
@@ -406,13 +430,19 @@ X_PRINT_retry:
 		 * - (MXARGS+1) : nargs
 		 * - (       1) : args
 		 */
+		static const int retcode = -(MXARGS+3);
+		static const int cap     = -(MXARGS+2);
+		static const int nargs   = -(MXARGS+1);
+		static const int args    = -1;
+
+		int i;
+		struct exec_args stack_args[MXARGS];
+
 		if (exec_reserve_stack(r, MXARGS + 2) != 0)
 			return -1;
-		int i;
-		struct exec_args args[MXARGS];
 
 		/* nargs = 0 */
-		egt(-(MXARGS+1)).v.ent = 0;
+		ENT(nargs) = 0;
 
 		/* build args array */
 		egt(-(MXARGS+2)).v.n = container_of(egt(-(MXARGS+3)).v.n->c.next,
@@ -423,13 +453,16 @@ X_PRINT_retry:
 				break;
 
 			/* check for aversize */
-			if (egt(-(MXARGS+1)).v.ent == MXARGS) {
+			if (ENT(nargs) == MXARGS) {
 				snprintf(r->error, ERROR_LEN, "function are more than 20 args");
 				return -1;
 			}
 
-			EXEC_NODE(egt(-(MXARGS+2)).v.n, 31, egt(-1-egt(-(MXARGS+1)).v.ent));
-			egt(-(MXARGS+1)).v.ent++;
+			/* execute argument and store it into stack */
+			EXEC_NODE(egt(-(MXARGS+2)).v.n, 31, egt(-1-ENT(nargs)));
+
+			/* one more argument */
+			ENT(nargs)++;
 
 			/* next var */
 			egt(-(MXARGS+2)).v.n = container_of(egt(-(MXARGS+2)).v.n->b.next, struct exec_node, b);
@@ -438,12 +471,12 @@ X_PRINT_retry:
 X_FUNCTION_retry:
 
 		/* copy args TODO: faut voir si il ne vaut mieux pas donner un morceau de pile ... */
-		for (i=0; i<egt(-(MXARGS+1)).v.ent; i++)
-			memcpy(&args[i], &egt(-1-i), sizeof(egt(-1-i)));
+		for (i = 0; i < ENT(nargs); i++)
+			memcpy(&stack_args[i], &egt(-1-i), sizeof(egt(-1-i)));
 
 		/* exec function */
-		i = egt(-(MXARGS+3)).v.n->v.v.func->f(r->arg, args,
-		                               egt(-(MXARGS+1)).v.ent, &egt(-(MXARGS+3)));
+		i = egt(-(MXARGS+3)).v.n->v.v.func->f(r->arg, stack_args,
+		                                      ENT(nargs), &egt(-(MXARGS+3)));
 
 		if (i != 0) {
 			r->retry = &&X_FUNCTION_retry;
@@ -468,6 +501,12 @@ X_FUNCTION_retry:
 		 * -2 : exec
 		 * -1 : ok
 		 */
+		static const int n    = -5;
+		static const int var  = -4;
+		static const int val  = -3;
+		static const int exec = -2;
+		static const int ok   = -1;
+
 		if (exec_reserve_stack(r, 4) != 0)
 			return -1;
 
@@ -479,7 +518,7 @@ X_FUNCTION_retry:
 		egt(-2).v.n = egt(-4).v.n;
 
 		/* init already exec at 0 */
-		egt(-1).v.ent = 0;
+		ENT(ok) = 0;
 
 		while (1) {
 
@@ -495,7 +534,7 @@ X_FUNCTION_retry:
 			   - c'est default
 			   - c'est la bonne valeur */
 			EXEC_NODE(egt(-4).v.n, 32, ret);
-			if (egt(-1).v.ent == 1 ||
+			if (ENT(ok) == 1 ||
 			    egt(-3).v.n->type == X_NULL ||
 			    egt(-3).v.n->v.v.ent == ret.v.ent) {
 
@@ -503,7 +542,7 @@ X_FUNCTION_retry:
 				EXEC_NODE(egt(-2).v.n, 33, ret);
 
 				/* already matched = 1 */
-				egt(-1).v.ent = 1;
+				ENT(ok) = 1;
 
 				/* c'est fini si on a recu un break; */
 				if (ret.v.ent != 0)
@@ -616,6 +655,11 @@ X_FUNCTION_retry:
 		 * -2 : exec
 		 * -1 : exec_else
 		 */
+		static const int retcode   = -4;
+		static const int cond      = -3;
+		static const int exec      = -2;
+		static const int exec_else = -1;
+
 		if (exec_reserve_stack(r, 3) != 0)
 			return -1;
 
@@ -636,7 +680,7 @@ X_FUNCTION_retry:
 
 		/* if false */
 		else
-			egt(-4).v.ent = 0;
+			ENT(retcode) = 0;
 
 		if (exec_free_stack(r, 3) != 0)
 			return -1;
