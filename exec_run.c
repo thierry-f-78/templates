@@ -113,9 +113,7 @@ int exec_run_now(struct exec_run *r) {
 		[X_SWITCH]   = &&exec_X_SWITCH,
 		[X_FOR]      = &&exec_X_FOR,
 		[X_WHILE]    = &&exec_X_WHILE,
-		[X_IF]       = &&exec_X_IF,
-		[X_BREAK]    = NULL,
-		[X_CONT]     = NULL
+		[X_IF]       = &&exec_X_IF
 	};
 
 	/* go back at position in ENOENT write case */
