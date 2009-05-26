@@ -11,10 +11,11 @@
 #include "exec_internals.h"
 #include "templates.h"
 
+/* the size of arg struct, this is used for arg copy */
+#define ARG_SIZE sizeof(struct exec_args)
+
 /* reserve words in stack */
-static inline 
-int exec_reserve_stack(struct exec_run *r, int size)
-{
+static inline int exec_reserve_stack(struct exec_run *r, int size) {
 	r->stack_ptr += size;
 	if (r->stack_ptr >= STACKSIZE) {
 		snprintf(r->error, ERROR_LEN, "stack overflow ( > STACKSIZE)");
@@ -24,9 +25,7 @@ int exec_reserve_stack(struct exec_run *r, int size)
 }
 
 /* restore words into stack */
-static inline
-int exec_free_stack(struct exec_run *r, int size)
-{
+static inline int exec_free_stack(struct exec_run *r, int size) {
 	r->stack_ptr -= size;
 	if (r->stack_ptr < 0) {
 		snprintf(r->error, ERROR_LEN, "stack overflow ( < 0)");
@@ -85,20 +84,61 @@ static inline struct exec_args *get_arg(struct exec_run *r, int relative_index) 
 	return &r->stack[r->stack_ptr + relative_index];
 }
 
-
 /* theses macros permit to use previous accessor functions
  * same as variable
  */
-#define ENT(__var)    (*get_ent(r, __var))
-#define STR(__var)    (*get_str(r, __var))
-#define PTR(__var)    (*get_ptr(r, __var))
-#define VAR(__var)    (*get_var(r, __var))
-#define FUNC(__var)   (*get_func(r, __var))
-#define NODE(__var)   (*get_node(r, __var))
-#define LEN(__var)    (*get_len(r, __var))
-#define TYPE(__var)   (*get_type(r, __var))
-#define FREEIT(__var) (*get_freeit(r, __var))
-#define ARG(__var)    get_arg(r, __var)
+#define ENT(__var)    (*get_ent(r, __var))    /* int                   */
+#define STR(__var)    (*get_str(r, __var))    /* char *                */
+#define PTR(__var)    (*get_ptr(r, __var))    /* void *                */
+#define VAR(__var)    (*get_var(r, __var))    /* struct exec_vars *    */
+#define FUNC(__var)   (*get_func(r, __var))   /* struct exec_funcs *   */
+#define NODE(__var)   (*get_node(r, __var))   /* struct exec_node *    */
+#define LEN(__var)    (*get_len(r, __var))    /* int                   */
+#define TYPE(__var)   (*get_type(r, __var))   /* enum exec_args_type   */
+#define FREEIT(__var) (*get_freeit(r, __var)) /* char                  */
+#define ARG(__var)    get_arg(r, __var)       /* struct exec_args *    */
+
+/* theses accessors return arg value of node, 
+ * when the node is in the stack
+ */
+
+/* node value str accessor */
+static inline char **get_node_str(struct exec_run *r, int relative_index) {
+	return &(*get_node(r, relative_index))->v.v.str;
+}
+
+/* node value var accessor */
+static inline struct exec_vars **get_node_var(struct exec_run *r, int relative_index) {
+	return &(*get_node(r, relative_index))->v.v.var;
+}
+
+/* node value func accessor */
+static inline struct exec_funcs **get_node_func(struct exec_run *r, int relative_index) {
+	return &(*get_node(r, relative_index))->v.v.func;
+}
+
+/* node value type accessor */
+static inline enum exec_type *get_node_type(struct exec_run *r, int relative_index) {
+	return &(*get_node(r, relative_index))->type;
+}
+
+/* node value ent accessor */
+static inline int *get_node_ent(struct exec_run *r, int relative_index) {
+	return &(*get_node(r, relative_index))->v.v.ent;
+}
+
+/* node value arg accessor */
+static inline struct exec_args *get_node_arg(struct exec_run *r, int relative_index) {
+	return &(*get_node(r, relative_index))->v;
+}
+
+/* theses macro are used for short names */
+#define NODE_ENT(__var)  (*get_node_ent(r, __var))  /* int                   */
+#define NODE_STR(__var)  (*get_node_str(r, __var))  /* char *                */
+#define NODE_VAR(__var)  (*get_node_var(r, __var))  /* struct exec_vars *    */
+#define NODE_FUNC(__var) (*get_node_func(r, __var)) /* struct exec_funcs *   */
+#define NODE_TYPE(__var) (*get_node_type(r, __var)) /* enum exec_type        */
+#define NODE_ARG(__var)  get_node_arg(r, __var)     /* struct exec_args *    */
 
 /* return children of node */
 static inline struct exec_node *exec_get_children(struct exec_node *n) {
@@ -201,9 +241,12 @@ int exec_run_now(struct exec_run *r) {
 * X_NULL
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_NULL) {
-		memset(ARG(-1), 0, sizeof(ARG(-1)));
+	EXEC_FUNCTION ( X_NULL ) {
+
+		memset(ARG(-1), 0, ARG_SIZE);
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 /**********************************************************************
@@ -211,7 +254,7 @@ int exec_run_now(struct exec_run *r) {
 * X_DISPLAY
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_DISPLAY) {
+	EXEC_FUNCTION ( X_DISPLAY ) {
 		/* -5: (n) execute node
 		 * -4: (n) children
 		 * -3: (char *) display it
@@ -283,7 +326,9 @@ X_DISPLAY_retry:
 
 		if (exec_free_stack(r, 4) != 0)
 			return -1;
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 
@@ -292,7 +337,7 @@ X_DISPLAY_retry:
 * X_PRINT
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_PRINT) {
+	EXEC_FUNCTION ( X_PRINT ) {
 		/* -3: (n) execute node
 		 * -2: (int) cur len
 		 * -1: (int) len
@@ -310,7 +355,7 @@ X_DISPLAY_retry:
 		/* write */
 X_PRINT_retry:
 		ENT(cur_len) -= r->w(r->arg,
-		                     NODE(node)->v.v.str + ( ENT(len) - ENT(cur_len) ),
+		                     NODE_STR(node) + ( ENT(len) - ENT(cur_len) ),
 		                     ENT(cur_len));
 
 		/* end of write ? */
@@ -321,7 +366,9 @@ X_PRINT_retry:
 
 		if (exec_free_stack(r, 2) != 0)
 			return -1;
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 
@@ -330,7 +377,7 @@ X_PRINT_retry:
 * X_COLLEC
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_COLLEC) {
+	EXEC_FUNCTION ( X_COLLEC ) {
 		/* -2: (n) execute node
 		 * -1: (n) current execute node
 		 */
@@ -401,7 +448,7 @@ X_PRINT_retry:
 * X_OR
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_TWO_OPERAND) {
+	EXEC_FUNCTION ( X_TWO_OPERAND ) {
 		/* -3 : n
 		 * -2 : a et val(a)
 		 * -1 : b et val(b)
@@ -455,9 +502,12 @@ X_PRINT_retry:
 			         "[%s:%d] unknown function code", __FILE__, __LINE__);
 			return -1;
 		}
+
 		if (exec_free_stack(r, 2) != 0)
 			return -1;
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 
@@ -466,7 +516,7 @@ X_PRINT_retry:
 * X_ASSIGN
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_ASSIGN) {
+	EXEC_FUNCTION ( X_ASSIGN ) {
 		/* -3 : n
 		 * -2 : a
 		 * -1 : b
@@ -485,9 +535,9 @@ X_PRINT_retry:
 		NODE(b) = exec_get_brother(NODE(a));
 
 		/* exec b, resultat -> a */
-		EXEC_NODE(NODE(b), 30, &r->vars[ NODE(a)->v.v.var->offset ]);
+		EXEC_NODE(NODE(b), 30, &r->vars[ NODE_VAR(a)->offset ]);
 
-		memcpy( ARG(n), &r->vars[ NODE(a)->v.v.var->offset ], sizeof(*ARG(n)) );
+		memcpy( ARG(n), &r->vars[ NODE_VAR(a)->offset ], ARG_SIZE);
 
 		if (exec_free_stack(r, 2) != 0)
 			return -1;
@@ -502,7 +552,7 @@ X_PRINT_retry:
 * X_FUNCTION
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_FUNCTION) {
+	EXEC_FUNCTION ( X_FUNCTION ) {
 		/* - (MXARGS+3) : n
 		 * - (MXARGS+2) : children are params
 		 * - (MXARGS+1) : nargs
@@ -544,10 +594,10 @@ X_FUNCTION_retry:
 
 		/* copy args TODO: faut voir si il ne vaut mieux pas donner un morceau de pile ... */
 		for (i = 0; i < ENT(nargs); i++)
-			memcpy(&stack_args[i], ARG(args - i), sizeof(*ARG(args - i)));
+			memcpy(&stack_args[i], ARG(args - i), ARG_SIZE);
 
 		/* exec function */
-		i = NODE(retcode)->v.v.func->f(r->arg, stack_args, ENT(nargs), ARG(retcode));
+		i = NODE_FUNC(retcode)->f(r->arg, stack_args, ENT(nargs), ARG(retcode));
 
 		if (i != 0) {
 			r->retry = &&X_FUNCTION_retry;
@@ -556,7 +606,9 @@ X_FUNCTION_retry:
 
 		if (exec_free_stack(r, MXARGS + 2) != 0)
 			return -1;
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 
@@ -565,7 +617,7 @@ X_FUNCTION_retry:
 * X_SWITCH
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_SWITCH) {
+	EXEC_FUNCTION ( X_SWITCH ) {
 		/* -5 : n
 		 * -4 : var
 		 * -3 : val
@@ -607,8 +659,8 @@ X_FUNCTION_retry:
 			   - c'est la bonne valeur */
 			EXEC_NODE(NODE(var), 32, ARG(ret));
 			if (ENT(ok) == 1 ||
-			    NODE(val)->type == X_NULL ||
-			    NODE(val)->v.v.ent == ENT(ret)) {
+			    NODE_TYPE(val) == X_NULL ||
+			    NODE_ENT(val) == ENT(ret)) {
 
 				/* execute instrictions */
 				EXEC_NODE(NODE(exec), 33, ARG(ret));
@@ -635,7 +687,7 @@ X_FUNCTION_retry:
 * X_FOR
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_FOR) {
+	EXEC_FUNCTION ( X_FOR ) {
 		/* -5 : n
 		 * -4 : init
 		 * -3 : cond
@@ -694,7 +746,7 @@ X_FUNCTION_retry:
 * X_WHILE
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_WHILE) {
+	EXEC_FUNCTION ( X_WHILE ) {
 		/* -3 : n
 		 * -2 : cond
 		 * -1 : exec
@@ -740,7 +792,7 @@ X_FUNCTION_retry:
 * X_IF
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_IF) {
+	EXEC_FUNCTION ( X_IF ) {
 		/* -4 : n
 		 * -3 : cond
 		 * -2 : exec
@@ -755,7 +807,6 @@ X_FUNCTION_retry:
 		if (exec_reserve_stack(r, 4) != 0)
 			return -1;
 
-		// TODO: deux variables suffisent ... on n'exucute pas le true et le false en meme temps !
 		NODE(cond)      = exec_get_children(NODE(retcode));
 		NODE(exec)      = exec_get_brother(NODE(cond));
 		NODE(exec_else) = exec_get_brother(NODE(exec));
@@ -777,7 +828,9 @@ X_FUNCTION_retry:
 
 		if (exec_free_stack(r, 4) != 0)
 			return -1;
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 /* end point functions */
@@ -787,9 +840,12 @@ X_FUNCTION_retry:
 * X_VAR
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_VAR) {
-		memcpy(ARG(-1), &r->vars[NODE(-1)->v.v.var->offset], sizeof(*ARG(-1)));
+	EXEC_FUNCTION ( X_VAR ) {
+
+		memcpy(ARG(-1), &r->vars[NODE_VAR(-1)->offset], ARG_SIZE);
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 /**********************************************************************
@@ -797,9 +853,12 @@ X_FUNCTION_retry:
 * X_INTEGER
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_INTEGER) {
-		memcpy( ARG(-1), &NODE(-1)->v, sizeof(*ARG(-1)) );
+	EXEC_FUNCTION ( X_INTEGER ) {
+
+		memcpy( ARG(-1), NODE_ARG(-1), ARG_SIZE);
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 /**********************************************************************
@@ -807,9 +866,12 @@ X_FUNCTION_retry:
 * X_STRING
 *
 **********************************************************************/
-	EXEC_FUNCTION(X_STRING) {
-		memcpy( ARG(-1), &NODE(-1)->v, sizeof(*ARG(-1)) );
+	EXEC_FUNCTION ( X_STRING ) {
+
+		memcpy( ARG(-1), NODE_ARG(-1), ARG_SIZE);
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 }
