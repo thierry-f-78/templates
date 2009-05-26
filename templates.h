@@ -94,6 +94,7 @@ struct exec_args {
 		struct exec_vars *var;
 		struct exec_funcs *func;
 		struct exec_node *n;
+		struct exec_args *arg;
 		void *ptr;
 	} v;
 	int len;
