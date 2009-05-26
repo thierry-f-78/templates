@@ -100,9 +100,14 @@ static inline struct exec_args *get_arg(struct exec_run *r, int relative_index) 
 #define FREEIT(__var) (*get_freeit(r, __var))
 #define ARG(__var)    get_arg(r, __var)
 
+/* return children of node */
+static inline struct exec_node *exec_get_children(struct exec_node *n) {
+	return container_of(n->c.next, struct exec_node, b);
+}
+
 /* return brother of node */
 static inline struct exec_node *exec_get_brother(struct exec_node *n) {
-	return container_of(n->c.next, struct exec_node, b);
+	return container_of(n->b.next, struct exec_node, b);
 }
 
 /* execute function */
@@ -224,7 +229,7 @@ int exec_run_now(struct exec_run *r) {
 			return -1;
 
 		/* get children containing how to display */
-		NODE(child) = exec_get_brother(NODE(retnode)i);
+		NODE(child) = exec_get_children(NODE(retnode));
 
 		/* execute children */
 		EXEC_NODE(NODE(child), 2, ARG(dsp));
@@ -335,7 +340,7 @@ X_PRINT_retry:
 		if (exec_reserve_stack(r, 1) != 0)
 			return -1;
 
-		NODE(exec) = container_of(NODE(retcode)->c.next, struct exec_node, b);
+		NODE(exec) = exec_get_children(NODE(retcode));
 
 		//exec_X_COLLEC_loop:
 		while (1) {
@@ -362,7 +367,7 @@ X_PRINT_retry:
 			}
 
 			/* next var */
-			NODE(exec) = container_of(NODE(exec)->b.next, struct exec_node, b);
+			NODE(exec) = exec_get_brother(NODE(exec));
 			if (&NODE(exec)->b == &NODE(retcode)->c) {
 				PTR(retcode) = NULL;
 				break;
@@ -405,8 +410,8 @@ X_PRINT_retry:
 		if (exec_reserve_stack(r, 2) != 0)
 			return -1;
 
-		NODE(a) = container_of(NODE(n)->c.next, struct exec_node, b);
-		NODE(b) = container_of(NODE(a)->b.next, struct exec_node, b);
+		NODE(a) = exec_get_children(NODE(n));
+		NODE(b) = exec_get_brother(NODE(a));
 
 		EXEC_NODE(NODE(a), 4, ARG(a));
 		EXEC_NODE(NODE(b), 5, ARG(b));
@@ -471,10 +476,10 @@ X_PRINT_retry:
 			return -1;
 
 		/* a = fils 1 */
-		NODE(a) = container_of(NODE(n)->c.next, struct exec_node, b);
+		NODE(a) = exec_get_children(NODE(n));
 
 		/* b = fils 2 */
-		NODE(b) = container_of(NODE(a)->b.next, struct exec_node, b);
+		NODE(b) = exec_get_brother(NODE(a));
 
 		/* exec b, resultat -> a */
 		EXEC_NODE(NODE(b), 30, &r->vars[ NODE(a)->v.v.var->offset ]);
@@ -515,9 +520,9 @@ X_PRINT_retry:
 		ENT(nargs) = 0;
 
 		/* build args array */
-		for ( NODE(cap) = container_of(NODE(retcode)->c.next, struct exec_node, b);
+		for ( NODE(cap) = exec_get_children(NODE(retcode));
 		      &NODE(cap)->b != &NODE(retcode)->c;
-		      NODE(cap) = container_of(NODE(cap)->b.next, struct exec_node, b) ) {
+		      NODE(cap) = exec_get_brother(NODE(cap)) ) {
 
 			/* check for aversize */
 			if (ENT(nargs) == MXARGS) {
@@ -574,7 +579,7 @@ X_FUNCTION_retry:
 			return -1;
 
 		/* get var */
-		NODE(var) = container_of(NODE(n)->c.next, struct exec_node, b);
+		NODE(var) = exec_get_children(NODE(n));
 
 		/* set reference into -4. with this, the first get of
 		   the loop point on the good value */
@@ -585,8 +590,8 @@ X_FUNCTION_retry:
 
 		while (1) {
 
-			NODE(val)  = container_of(NODE(exec)->b.next, struct exec_node, b);
-			NODE(exec) = container_of(NODE(val)->b.next, struct exec_node, b);
+			NODE(val)  = exec_get_brother(NODE(exec));
+			NODE(exec) = exec_get_brother(NODE(val));
 
 			/* on a fait le tour */
 			if (&NODE(val)->b == &NODE(n)->c)
@@ -641,10 +646,10 @@ X_FUNCTION_retry:
 			return -1;
 
 		/* get 4 parameters for for loop */
-		NODE(init) = container_of(NODE(n)->c.next,    struct exec_node, b);
-		NODE(cond) = container_of(NODE(init)->b.next, struct exec_node, b);
-		NODE(next) = container_of(NODE(cond)->b.next, struct exec_node, b);
-		NODE(exec) = container_of(NODE(next)->b.next, struct exec_node, b);
+		NODE(init) = exec_get_children(NODE(n));
+		NODE(cond) = exec_get_brother(NODE(init));
+		NODE(next) = exec_get_brother(NODE(cond));
+		NODE(exec) = exec_get_brother(NODE(next));
 
 		/* execute init */
 		EXEC_NODE(NODE(init), 34, &ret);
@@ -694,8 +699,8 @@ X_FUNCTION_retry:
 		if (exec_reserve_stack(r, 2) != 0)
 			return -1;
 
-		NODE(cond) = container_of(NODE(retcode)->c.next, struct exec_node, b);
-		NODE(exec) = container_of(NODE(cond)->b.next,    struct exec_node, b);
+		NODE(cond) = exec_get_children(NODE(retcode));
+		NODE(exec) = exec_get_brother(NODE(cond));
 
 		while(1) {
 		
@@ -742,9 +747,9 @@ X_FUNCTION_retry:
 			return -1;
 
 		// TODO: deux variables suffisent ... on n'exucute pas le true et le false en meme temps !
-		NODE(cond)      = container_of(NODE(retcode)->c.next, struct exec_node, b);
-		NODE(exec)      = container_of(NODE(cond)->b.next,    struct exec_node, b);
-		NODE(exec_else) = container_of(NODE(exec)->b.next,    struct exec_node, b);
+		NODE(cond)      = exec_get_children(NODE(retcode));
+		NODE(exec)      = exec_get_brother(NODE(cond));
+		NODE(exec_else) = exec_get_brother(NODE(exec));
 
 		/* execute condition */
 		EXEC_NODE(NODE(cond), 40, &ret);
