@@ -305,6 +305,7 @@ int exec_display_recurse(struct exec *e, struct exec_node *n, int first, FILE *f
 
 int exec_display(struct exec *e, char *file, int display_ptr, int cut) {
 	struct exec_vars *v;
+	struct exec_funcs *f;
 	FILE *fd;
 	int ret;
 
@@ -324,6 +325,13 @@ int exec_display(struct exec *e, char *file, int display_ptr, int cut) {
 		"\tnode [ fontcolor=\"black\" ]\n"
 		"\tnode [ fillcolor=\"white\" ]\n"
 	);
+
+	/* display funcs */
+	fprintf(fd, "\t\"functions\" [ label=\"{Functionlist");
+	list_for_each_entry(f, &e->funcs, chain)
+		fprintf(fd, "|{%s|%p}", f->name, f->f);
+	fprintf(fd, "}\" fillcolor=\"lightyellow\" ]\n");
+
 
 	/* display var */
 	fprintf(fd, "\t\"vars\" [ label=\"{Varlist");
