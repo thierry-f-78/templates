@@ -155,7 +155,7 @@ static inline struct exec_node *exec_get_brother(struct exec_node *n) {
 	return -1;
 
 int exec_run_now(struct exec_run *r) {
-	struct exec_args ret;
+	struct exec_args ret_node;
 
 	static const void *goto_function[] = {
 		[X_NULL]     = &&exec_X_NULL,
@@ -193,7 +193,7 @@ int exec_run_now(struct exec_run *r) {
 
 
 	/* call first node */
-	EXEC_NODE(r->n, 1, &ret);
+	EXEC_NODE(r->n, 1, &ret_node);
 	return 0;
 
 /**********************************************************************
@@ -334,10 +334,11 @@ X_PRINT_retry:
 		/* -2: (n) execute node
 		 * -1: (n) current execute node
 		 */
-		static const int retcode = -2;
-		static const int exec    = -1;
+		static const int retcode = -3;
+		static const int exec    = -2;
+		static const int retval  = -1;
 
-		if (exec_reserve_stack(r, 1) != 0)
+		if (exec_reserve_stack(r, 2) != 0)
 			return -1;
 
 		NODE(exec) = exec_get_children(NODE(retcode));
@@ -358,11 +359,11 @@ X_PRINT_retry:
 			}
 
 			/* execute */
-			EXEC_NODE(NODE(exec), 3, &ret);
+			EXEC_NODE(NODE(exec), 3, ARG(retval));
 
 			/* if "if" return break or continue */
-			if (NODE(exec)->type == X_IF && ret.v.ent != 0) {
-				ENT(retcode) = ret.v.ent;
+			if (NODE(exec)->type == X_IF && ENT(retval) != 0) {
+				ENT(retcode) = ENT(retval);
 				break;
 			}
 
@@ -374,9 +375,11 @@ X_PRINT_retry:
 			}
 		}
 
-		if (exec_free_stack(r, 1) != 0)
+		if (exec_free_stack(r, 2) != 0)
 			return -1;
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 
@@ -569,13 +572,14 @@ X_FUNCTION_retry:
 		 * -2 : exec
 		 * -1 : ok
 		 */
-		static const int n    = -5;
-		static const int var  = -4;
-		static const int val  = -3;
-		static const int exec = -2;
-		static const int ok   = -1;
+		static const int n    = -6;
+		static const int var  = -5;
+		static const int val  = -4;
+		static const int exec = -3;
+		static const int ok   = -2;
+		static const int ret  = -1;
 
-		if (exec_reserve_stack(r, 4) != 0)
+		if (exec_reserve_stack(r, 5) != 0)
 			return -1;
 
 		/* get var */
@@ -601,26 +605,28 @@ X_FUNCTION_retry:
 			   - on a deja executé
 			   - c'est default
 			   - c'est la bonne valeur */
-			EXEC_NODE(NODE(var), 32, &ret);
+			EXEC_NODE(NODE(var), 32, ARG(ret));
 			if (ENT(ok) == 1 ||
 			    NODE(val)->type == X_NULL ||
-			    NODE(val)->v.v.ent == ret.v.ent) {
+			    NODE(val)->v.v.ent == ENT(ret)) {
 
 				/* execute instrictions */
-				EXEC_NODE(NODE(exec), 33, &ret);
+				EXEC_NODE(NODE(exec), 33, ARG(ret));
 
 				/* already matched = 1 */
 				ENT(ok) = 1;
 
 				/* c'est fini si on a recu un break; */
-				if (ret.v.ent != 0)
+				if (ENT(ret) != 0)
 					break;
 			}
 		}
 
-		if (exec_free_stack(r, 4) != 0)
+		if (exec_free_stack(r, 5) != 0)
 			return -1;
+
 		EXEC_RETURN();
+
 	} END_FUNCTION
 
 
@@ -636,13 +642,14 @@ X_FUNCTION_retry:
 		 * -2 : next
 		 * -1 : exec
 		 */
-		static const int n    = -5;
-		static const int init = -4;
-		static const int cond = -3;
-		static const int next = -2;
-		static const int exec = -1;
+		static const int n    = -6;
+		static const int init = -5;
+		static const int cond = -4;
+		static const int next = -3;
+		static const int exec = -2;
+		static const int ret  = -1;
 
-		if (exec_reserve_stack(r, 4) != 0)
+		if (exec_reserve_stack(r, 5) != 0)
 			return -1;
 
 		/* get 4 parameters for for loop */
@@ -652,29 +659,29 @@ X_FUNCTION_retry:
 		NODE(exec) = exec_get_brother(NODE(next));
 
 		/* execute init */
-		EXEC_NODE(NODE(init), 34, &ret);
+		EXEC_NODE(NODE(init), 34, ARG(ret));
 
 		while (1) {
 		
 			/* execute cond - quit if false */
-			EXEC_NODE(NODE(cond), 35, &ret);
-			if (ret.v.ent == 0)
+			EXEC_NODE(NODE(cond), 35, ARG(ret));
+			if (ENT(ret) == 0)
 				break;
 
 			/* execute code */
-			EXEC_NODE(NODE(exec), 36, &ret);
+			EXEC_NODE(NODE(exec), 36, ARG(ret));
 
 			/* check break */
-			if (ret.v.ent == -1)
+			if (ENT(ret) == -1)
 				break;
 
 			/* implicit continue */
 
 			/* execute next */
-			EXEC_NODE(NODE(next), 37, &ret);
+			EXEC_NODE(NODE(next), 37, ARG(ret));
 		}
 
-		if (exec_free_stack(r, 4) != 0)
+		if (exec_free_stack(r, 5) != 0)
 			return -1;
 
 		EXEC_RETURN();
@@ -692,11 +699,12 @@ X_FUNCTION_retry:
 		 * -2 : cond
 		 * -1 : exec
 		 */
-		static const int retcode = -3;
-		static const int cond    = -2;
-		static const int exec    = -1;
+		static const int retcode = -4;
+		static const int cond    = -3;
+		static const int exec    = -2;
+		static const int ret     = -1;
 
-		if (exec_reserve_stack(r, 2) != 0)
+		if (exec_reserve_stack(r, 3) != 0)
 			return -1;
 
 		NODE(cond) = exec_get_children(NODE(retcode));
@@ -705,21 +713,21 @@ X_FUNCTION_retry:
 		while(1) {
 		
 			/* execute condition - if false break */
-			EXEC_NODE(NODE(cond), 38, &ret);
-			if (ret.v.ent == 0)
+			EXEC_NODE(NODE(cond), 38, ARG(ret));
+			if (ENT(ret) == 0)
 				break;
 
 			/* execute code */
-			EXEC_NODE(NODE(exec), 39, &ret);
+			EXEC_NODE(NODE(exec), 39, ARG(ret));
 
 			/* check break */
-			if (ret.v.ent == -1)
+			if (ENT(ret) == -1)
 				break;
 
 			/* implicit continue */
 		}
 
-		if (exec_free_stack(r, 2) != 0)
+		if (exec_free_stack(r, 3) != 0)
 			return -1;
 
 		EXEC_RETURN();
@@ -738,12 +746,13 @@ X_FUNCTION_retry:
 		 * -2 : exec
 		 * -1 : exec_else
 		 */
-		static const int retcode   = -4;
-		static const int cond      = -3;
-		static const int exec      = -2;
-		static const int exec_else = -1;
+		static const int retcode   = -5;
+		static const int cond      = -4;
+		static const int exec      = -3;
+		static const int exec_else = -2;
+		static const int ret       = -1;
 
-		if (exec_reserve_stack(r, 3) != 0)
+		if (exec_reserve_stack(r, 4) != 0)
 			return -1;
 
 		// TODO: deux variables suffisent ... on n'exucute pas le true et le false en meme temps !
@@ -752,10 +761,10 @@ X_FUNCTION_retry:
 		NODE(exec_else) = exec_get_brother(NODE(exec));
 
 		/* execute condition */
-		EXEC_NODE(NODE(cond), 40, &ret);
+		EXEC_NODE(NODE(cond), 40, ARG(ret));
 
 		/* if true, execute "exec" */
-		if (ret.v.ent != 0)
+		if (ENT(ret) != 0)
 			EXEC_NODE(NODE(exec), 41, ARG(retcode));
 
 		/* if false and else block is present */
@@ -766,7 +775,7 @@ X_FUNCTION_retry:
 		else
 			ENT(retcode) = 0;
 
-		if (exec_free_stack(r, 3) != 0)
+		if (exec_free_stack(r, 4) != 0)
 			return -1;
 		EXEC_RETURN();
 	} END_FUNCTION
