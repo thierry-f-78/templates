@@ -182,13 +182,7 @@ static inline struct exec_node *exec_get_brother(struct exec_node *n) {
 		PTR(-3)  = && exec_ ## __label; \
 		PARG(-2) = arg; \
 		NODE(-1) = node; \
-		if (goto_function[node->type] == NULL) { \
-			snprintf(r->error, ERROR_LEN, \
-			         "[%s:%d] unknown function code <%d>", \
-			         __FILE__, __LINE__, node->type); \
-			return -1; \
-		} \
-		goto *goto_function[node->type];\
+		goto *goto_function[node->type]; \
 		exec_ ## __label: \
 		if (exec_free_stack(r, 3) != 0) \
 			return -1; \
@@ -196,11 +190,6 @@ static inline struct exec_node *exec_get_brother(struct exec_node *n) {
 
 /* return to caller */
 #define EXEC_RETURN() \
-	if (PTR(-3) == NULL) { \
-		snprintf(r->error, ERROR_LEN, "[%s:%d] error in return code", \
-		         __FILE__, __LINE__); \
-		return -1; \
-	} \
 	goto *PTR(-3);
 
 /* this stats pseudo function */

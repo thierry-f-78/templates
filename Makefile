@@ -13,7 +13,7 @@ LIBNAME = templates
 BUILDVER := $(shell ref=$$((git describe --tags) 2>/dev/null) && ref=$${ref%-g*} && echo "$${ref\#v}")
 
 LDFLAGS = 
-CFLAGS = -Wall -g -O0
+CFLAGS = -Wall -g -O2
 YFLAGS = -v
 
 OBJS =  template.o syntax.o exec.o exec_run.o exec_trace.o
