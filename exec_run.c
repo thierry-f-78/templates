@@ -124,6 +124,11 @@ static inline struct exec_args *get_node_arg(struct exec_run *r, int relative_in
 	return &(*get_node(r, relative_index))->v;
 }
 
+/* node value len accessor */
+static inline int *get_node_len(struct exec_run *r, int relative_index) {
+	return &(*get_node(r, relative_index))->v.len;
+}
+
 
 /* theses accessors return arg value of pointer on arg,
  * when arg ptr is in the stack
@@ -154,6 +159,7 @@ static inline int *get_parg_ent(struct exec_run *r, int relative_index) {
 #define NODE_VAR(__var)  (*get_node_var(r, __var))  /* struct exec_vars *    */
 #define NODE_FUNC(__var) (*get_node_func(r, __var)) /* struct exec_funcs *   */
 #define NODE_TYPE(__var) (*get_node_type(r, __var)) /* enum exec_type        */
+#define NODE_LEN(__var)  (*get_node_len(r, __var))  /* int                   */
 #define NODE_ARG(__var)    get_node_arg(r, __var)   /* struct exec_args *    */
 
 #define PARG_ENT(__var)  (*get_parg_ent(r, __var))  /* int                   */
@@ -173,7 +179,7 @@ static inline struct exec_node *exec_get_brother(struct exec_node *n) {
 #define EXEC_NODE(__node, __label, __ret) \
 	do { \
 		/* NOTE, if __node or __ret are relative, \
-		 * there are bad value after reserving stack \
+		 * theses take bad value after reserving stack \
 		 */ \
 		struct exec_node *node = __node; \
 		struct exec_args *arg = __ret; \
@@ -365,8 +371,8 @@ X_DISPLAY_retry:
 		if (exec_reserve_stack(r, 2) != 0)
 			return -1;
 
-		ENT(len)     = NODE(n)->v.len;
-		ENT(cur_len) = NODE(n)->v.len;
+		ENT(len)     = NODE_LEN(n);
+		ENT(cur_len) = NODE_LEN(n);
 
 		/* write */
 X_PRINT_retry:
@@ -414,13 +420,13 @@ X_PRINT_retry:
 
 			/* if break */
 			if (NODE(exec)->type == X_BREAK) {
-				PARG(ret)->v.ent = -1;
+				PARG_ENT(ret) = -1;
 				break;
 			}
 
 			/* if continue */
 			if (NODE(exec)->type == X_CONT) {
-				PARG(ret)->v.ent = -2;
+				PARG_ENT(ret) = -2;
 				break;
 			}
 
@@ -429,14 +435,14 @@ X_PRINT_retry:
 
 			/* if "if" return break or continue */
 			if (NODE(exec)->type == X_IF && ENT(retval) != 0) {
-				PARG(ret)->v.ent = ENT(retval);
+				PARG_ENT(ret) = ENT(retval);
 				break;
 			}
 
 			/* next var */
 			NODE(exec) = exec_get_brother(NODE(exec));
 			if (&NODE(exec)->b == &NODE(n)->c) {
-				PARG(ret)->v.ent = 0;
+				PARG_ENT(ret) = 0;
 				break;
 			}
 		}
@@ -859,7 +865,7 @@ X_FUNCTION_retry:
 
 		/* if false */
 		else
-			PARG(retc)->v.ent = 0;
+			PARG_ENT(retc) = 0;
 
 		if (exec_free_stack(r, 4) != 0)
 			return -1;
