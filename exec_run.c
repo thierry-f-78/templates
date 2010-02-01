@@ -34,6 +34,12 @@ static inline int exec_free_stack(struct exec_run *r, int size) {
 	return 0;
 }
 
+/*
+ * NOTE: for more information on context execution
+ * stack and accessors, see doc/stack.pdf
+ *
+ */
+
 /* ent accessor */
 static inline int *get_ent(struct exec_run *r, int relative_index) {
 	return &r->stack[r->stack_ptr + relative_index].v.ent;
@@ -258,8 +264,16 @@ int exec_run_now(struct exec_run *r) {
 *
 **********************************************************************/
 	EXEC_FUNCTION ( X_NULL ) {
+		/* -2: return NULL
+		 * -1: node
+		 */
 
-		memset(ARG(-1), 0, ARG_SIZE);
+		static const int ret = -2;
+
+		PARG(ret)->v.ptr = NULL;
+		PARG(ret)->len = 0;
+		PARG(ret)->type = XT_NULL;
+		PARG(ret)->freeit = 0;
 
 		EXEC_RETURN();
 
