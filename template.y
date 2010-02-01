@@ -589,7 +589,7 @@ int exec_parse_file(struct exec *e, FILE *fd) {
 	struct yyargs_t yyargs;
 	yyscan_t scanner;
 	int pip[2];
-	int retcode;
+	int retcode = -1;
 	char *args[4];
 
 	/* if preprocessor is set */
