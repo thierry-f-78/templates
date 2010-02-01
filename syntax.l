@@ -222,10 +222,7 @@ shex            \\x[0-9a-fA-F][0-9a-fA-F]
 	
 	"display"  { my_exec_new(X_DISPLAY); return DISPLAY; }
 	
-	"NULL"     {
-			my_exec_new_ent(X_INTEGER, 0);
-			return NUM;
-		}
+	"NULL"     { my_exec_new(X_NULL); return PTRNULL; }
 
 	({num}|{hex}) {
 			long val;

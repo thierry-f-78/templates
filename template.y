@@ -111,6 +111,7 @@ int yyerror(struct yyargs_t *args, char *str) {
 %token VAR
 %token STR
 %token NUM
+%token PTRNULL
 
 /* function */
 %token FUNCTION
@@ -532,6 +533,7 @@ Value:
 	VAR        { $$ = $1; }
 	| NUM      { $$ = $1; }
 	| STR      { $$ = $1; }
+	| PTRNULL  { $$ = $1; }
 	| Function { $$ = $1; }
 	| Display  { $$ = $1; }
 	;
