@@ -497,6 +497,8 @@ X_PRINT_retry:
 		static const int n   = -3;
 		static const int a   = -2;
 		static const int b   = -1;
+		static const char *aa;
+		static const char *bb;
 
 		if (exec_reserve_stack(r, 2) != 0)
 			return -1;
@@ -514,7 +516,6 @@ X_PRINT_retry:
 		case X_DIV:   PARG_ENT(ret) = ENT(a)  / ENT(b);            break;
 		case X_MOD:   PARG_ENT(ret) = ENT(a)  % ENT(b);            break;
 		case X_EQUAL: PARG_ENT(ret) = ENT(a) == ENT(b);            break;
-		case X_STREQ: PARG_ENT(ret) = strcmp(STR(a), STR(b)) == 0; break;
 		case X_DIFF:  PARG_ENT(ret) = ENT(a) != ENT(b);            break;
 		case X_LT:    PARG_ENT(ret) = ENT(a)  < ENT(b);            break;
 		case X_GT:    PARG_ENT(ret) = ENT(a)  > ENT(b);            break;
@@ -522,6 +523,15 @@ X_PRINT_retry:
 		case X_GE:    PARG_ENT(ret) = ENT(a) >= ENT(b);            break;
 		case X_AND:   PARG_ENT(ret) = ENT(a) && ENT(b);            break;
 		case X_OR:    PARG_ENT(ret) = ENT(a) || ENT(b);            break;
+		case X_STREQ: 
+			aa = STR(a);
+			bb = STR(b);
+			if (aa == NULL)
+				aa = "";
+			if (bb == NULL)
+				bb = "";
+			PARG_ENT(ret) = strcmp(aa, bb) == 0;
+			break;
 		/* just for warnings ! */
 		case X_NULL:
 		case X_COLLEC:
