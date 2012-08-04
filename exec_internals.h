@@ -47,7 +47,7 @@ struct exec_node *exec_new_str(struct exec *e, enum exec_type type,
 static inline
 struct exec_node *exec_new_ent(struct exec *e, enum exec_type type,
                                int ent, int line) {
-	return _exec_new(e, type, (void *)ent, XT_INTEGER, 0, line);
+	return _exec_new(e, type, (void *)(long)ent, XT_INTEGER, 0, line);
 }
 
 static inline
