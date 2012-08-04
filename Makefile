@@ -27,24 +27,11 @@ endif
 #CPPFLAGS = -DDEBUGING -DYYDEBUG
 CPPFLAGS =
 
-%.c: %.y
-	$(YACC.y) $<
-	mv -f y.tab.c $@
-	sed -i 's/"y.tab.c"/"$@"/g' $@
+%.c %.h: %.y
+	$(YACC) -o $(<:.y=.c) --defines=$(<:.y=.h) $<
 
-%.h: %.y
-	$(YACC.y) -d $<
-	rm y.tab.c
-	mv y.tab.h $@
-
-%.c: %.l
-	$(RM) $@
-	$(LEX.l) $< > $@
-	sed -i 's/"<stdout>"/"$@"/g' $@
-
-%.h: %.l
-	$(RM) $@
-	$(LEX.l) --header-file=$@ $< >/dev/null
+%.c %.h: %.l
+	$(LEX) -o $(<:.l=.c) --header-file=$(<:.l=.h) $<
 
 all: lib$(LIBNAME).a $(LIBNAME) client
 
@@ -75,8 +62,8 @@ syntax.h:   syntax.l
 template.h: template.y
 syntax.c:   syntax.l templates.h exec_internals.h template.h
 template.c: template.y exec_internals.h syntax.h templates.h
-syntax.o:   syntax.c
-template.o: template.c
+syntax.o:   syntax.c syntax.h
+template.o: template.c template.h
 exec.o:     exec.c templates.h exec_internals.h
 exec_run.o: exec_run.c templates.h exec_internals.h
 exec_trace.o: exec_trace.c templates.h
