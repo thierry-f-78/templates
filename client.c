@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 	int script = 0;
 	char *filename = NULL;
 	int dot = 0;
-	char *dotname;
+	char *dotname = NULL;
 	FILE *fd;
 
 	for (i=1; i<argc; i++) {
