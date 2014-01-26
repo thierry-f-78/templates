@@ -28,7 +28,6 @@ struct yyargs_t {
 };
 
 extern const char *exec_cmd2str[];
-extern const char *exec_type2str[];
 
 struct exec_node *_exec_new(struct exec *e, enum exec_type type, void *value,
                             enum exec_args_type valtype, int len, int line);

@@ -48,12 +48,16 @@ const char *exec_cmd2str[] = {
 	[X_CONT]     = "X_CONT"
 };
 
-const char *exec_type2str[] = {
-	[XT_STRING]  = "XT_STRING",
-	[XT_INTEGER] = "XT_INTEGER",
-	[XT_PTR]     = "XT_PTR",
-	[XT_NULL]    = "XT_NULL"
-};
+const char *exec_type2str(enum exec_args_type type) {
+	switch (type) {
+	case XT_STRING:  return "XT_STRING";
+	case XT_INTEGER: return "XT_INTEGER";
+	case XT_PTR:     return "XT_PTR";
+	case XT_FLOAT:   return "XT_FLOAT";
+	case XT_NULL:    return "XT_NULL";
+	default:         return "UNKNOWN";
+	}
+}
 
 char *replace_n(struct exec *e, char *str) {
 	char *p;

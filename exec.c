@@ -143,7 +143,7 @@ struct exec_node *_exec_new(struct exec *e, enum exec_type type, void *value,
 #ifdef DEBUG
 	fprintf(stderr, "[%s:%s:%d] %p: type=%s(%d) value=%p, valtype=%s(%d), len=%d, line=%d\n",
 	        __FILE__, __FUNCTION__, __LINE__,
-	        n, exec_cmd2str[type], type, value, exec_type2str[valtype], valtype, len, line);
+	        n, exec_cmd2str[type], type, value, exec_type2str(valtype), valtype, len, line);
 #endif
 
 	return n;
