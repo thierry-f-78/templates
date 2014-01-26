@@ -60,6 +60,7 @@ enum exec_args_type {
 	XT_STRING,
 	XT_INTEGER,
 	XT_PTR,
+	XT_FLOAT,
 	XT_NULL
 };
 
@@ -91,6 +92,7 @@ struct exec_args {
 	union {
 		int ent;
 		char *str;
+		double fp; /* floating point */
 		struct exec_vars *var;
 		struct exec_funcs *func;
 		struct exec_node *n;
@@ -150,6 +152,11 @@ struct exec_run {
 	void *retry;
 	char error[ERROR_LEN];
 };
+
+/**
+ * This fucntion converts number XT_* into his string representation.
+ */
+const char *exec_type2str(enum exec_args_type type);
 
 /**
  * New template
@@ -367,6 +374,30 @@ void exec_set_var_block(struct exec_run *r, struct exec_vars *v,
 	reqvar.len = len;
 	reqvar.type = XT_STRING;
 	reqvar.freeit = freeit;
+}
+
+/**
+ * set variable double value
+ * @param r is run program id
+ * @param v is var descriptor
+ * @param val is string
+ * @param free is flag. when this flags is set, the ptr is freed
+ */
+static inline
+void exec_set_var_double(struct exec_run *r, struct exec_vars *v,
+                         double val) {
+	if (v == NULL)
+		return;
+
+	if (v->offset > r->e->nbvars || v->offset < 0)
+		return;
+
+	if (reqvar.freeit == 1)
+		free(reqvar.v.str);
+	reqvar.v.fp = val;
+	reqvar.len = 0;
+	reqvar.type = XT_FLOAT;
+	reqvar.freeit = 0;
 }
 
 /**
