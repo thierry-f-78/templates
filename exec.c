@@ -21,7 +21,7 @@ struct exec *exec_new_template(void) {
 
 	e = malloc(sizeof(*e));
 	if (e == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s", sizeof(*e), strerror(errno));
+		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s", (long)sizeof(*e), strerror(errno));
 		return NULL;
 	}
 	e->preprocessor = NULL;
@@ -129,7 +129,7 @@ struct exec_node *_exec_new(struct exec *e, enum exec_type type, void *value,
 
 	n = malloc(sizeof *n);
 	if (n == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s\n", sizeof(*n), strerror(errno));
+		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s\n", (long)sizeof(*n), strerror(errno));
 		return NULL;
 	}
 
@@ -178,7 +178,7 @@ struct exec_vars *exec_var(struct exec *e, char *str) {
 	/* memory for var */
 	v = malloc(sizeof(*v));
 	if (v == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s", sizeof(*v), strerror(errno));
+		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s", (long)sizeof(*v), strerror(errno));
 		return NULL;
 	}
 
@@ -227,7 +227,7 @@ int exec_declare_func(struct exec *e, char *name, exec_function fc) {
 	/* memory for func */
 	f = malloc(sizeof(*f));
 	if (f == NULL) {
-		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s", sizeof(*f), strerror(errno));
+		snprintf(e->error, ERROR_LEN, "malloc(%lu): %s", (long)sizeof(*f), strerror(errno));
 		return -1;
 	}
 
