@@ -1,4 +1,4 @@
-/* fichier importé de: linux-2.6.24/include/linux/list.h */
+/* File imported from linux-2.6.24/include/linux/list.h */
 
 /*
  * This program is free software; you can redistribute it and/or
